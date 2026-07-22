@@ -1,0 +1,22 @@
+{
+  "name": "testes-automatizados-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test --config=src/app/execution/playwright.config.ts",
+    "test:e2e:headed": "playwright test --config=src/app/execution/playwright.config.ts --headed",
+    "test:e2e:debug": "playwright test --config=src/app/execution/playwright.config.ts --debug",
+    "test:e2e:ui": "playwright test --config=src/app/execution/playwright.config.ts --ui",
+    "test:e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^20.14.0",
+    "dotenv": "^16.5.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
+  }
+}
