@@ -22,6 +22,11 @@ export default defineConfig({
     trace: "on-first-retry",
     // screenshot automático quando um teste falha — vai virar o "print" do resultado
     screenshot: "only-on-failure",
+    // o navegador do Playwright abre "limpo", sem o idioma que o Chrome
+    // pessoal já tem salvo — sem isso o PGR carrega em inglês (o app decide
+    // o idioma pelo idioma do navegador) e os locators com texto em
+    // português (ex: getByLabel("Usuário")) não encontram nada
+    locale: "pt-BR",
   },
 
   // por enquanto só Chromium: o PGR é acessado sempre pelo mesmo navegador
