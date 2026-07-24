@@ -1,7 +1,13 @@
 import dotenv from "dotenv"
+import path from "path"
+import { fileURLToPath } from "url"
 
-// carrega o .env (que fica fora do git) para dentro de process.env
-dotenv.config()
+// carrega o .env (que fica fora do git) para dentro de process.env — caminho
+// explícito porque o cwd varia (ex: a extensão do Playwright no VS Code roda
+// de outro diretório e não acha o .env com dotenv.config() sem argumento).
+// Usa import.meta.url em vez de __dirname porque este arquivo roda como
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") })
 
 function obrigatoria(nome: string): string {
   const valor = process.env[nome]

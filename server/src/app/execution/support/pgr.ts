@@ -37,6 +37,16 @@ export async function clicarCheckboxMaterial(page: Page, textoLabel: string) {
 // disponível em cada select — não importa qual profissional/modelo é,
 // só que o formulário fique válido. Confirmado funcionando (2026-07-23).
 export async function preencherCadastroValidoESalvar(page: Page) {
+  // BUG REAL: "Incluir GHEs sem riscos" nasce marcado, mas o texto padrão do
+  // textarea obrigatório associado às vezes não carrega a tempo (race
+  // condition), bloqueando o Salvar de qualquer PGR novo. Contornado aqui.
+  await page.getByRole("tab", { name: "Configurações" }).click()
+  const checkboxGheSemRiscos = page.getByRole("checkbox", { name: "Incluir GHEs sem riscos" })
+  const textareaGheSemRiscos = page.getByRole("textbox", { name: /Incluir GHEs sem riscos - Descritivo/ })
+  if (await checkboxGheSemRiscos.isChecked() && (await textareaGheSemRiscos.inputValue()) === "") {
+    await page.getByRole("button", { name: "Restaurar texto padrão" }).click()
+  }
+
   // os campos abaixo ficam na aba "Referências" — se o teste chamou essa
   // função estando em outra aba (Configurações, Anexos...), garante que
   // navega pra lá primeiro, senão os campos não ficam visíveis/clicáveis

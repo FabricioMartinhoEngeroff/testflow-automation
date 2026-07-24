@@ -3,7 +3,7 @@ import { env } from "../shared/env"
 
 export default defineConfig({
   // onde o Playwright procura os arquivos *.spec.ts
-  testDir: "./specs",
+  testDir: "./teste_no_pgr/specs",
 
   // roda um cenário de cada vez — evita dois testes mexendo no mesmo
   // registro/tela real do PGR ao mesmo tempo e colidindo

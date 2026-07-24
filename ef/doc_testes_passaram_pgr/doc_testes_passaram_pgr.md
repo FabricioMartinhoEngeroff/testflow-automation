@@ -2,7 +2,53 @@
 
 Testes E2E rodados de verdade contra `apollus.dev.apollusehs.com.br` (ambiente de homologação), com Playwright. Só entram aqui os que **realmente passaram** — o resto dos ~416 cenários da planilha continua como `test.fixme()` nos specs, sem rodar ainda.
 
-Última atualização: 2026-07-23 (lote completo da aba Anexos e da aba Colaboradores).
+Última atualização: 2026-07-24 (lote completo da aba Referências).
+
+## Aba Referências — completa (123 testes)
+`server/src/app/execution/teste_no_pgr/specs/aba-referencias.spec.ts` — cobre os cenários TST659-TST1012 da planilha (Responsável Técnico, Observações, ART, Expostos mulheres/homens/PCDs, Equipe modal+grid, Configurações gerais), mais 6 cenários extras (EXTRA1-6) fora da planilha original, encontrados comparando a EF com o comportamento real.
+
+| ID | Ação | Resultado confirmado |
+|---|---|---|
+| TST659/660 | Campos antigos de CPF/Nome (Responsável Técnico e Equipe) | Não existem mais no DOM — confirmado |
+| TST662-665 | Campo "Responsável Técnico": presença, formato das opções | Select único, formato "CPF - Nome - Registro conselho" |
+| TST663 | Validar "valor padrão" do campo | **Ambiguidade da planilha**: "Profissional responsável" é o *placeholder* do campo vazio, não um valor pré-selecionado |
+| TST672, 675-677 | Selecionar, salvar, reabrir, editar responsável técnico | Comportamento padrão de persistência, igual às outras abas |
+| TST681 | Ordenação da lista | Ordenada por **nome** (2º segmento da opção), não pela string inteira — cuidado ao comparar, o CPF (1º segmento) domina a ordenação alfabética se comparar a linha toda |
+| TST682/684 | Duplicidade / máscara de CPF | Sem CPF duplicado na amostra (35 opções); todos no formato `000.000.000-00` |
+| TST689 | Ausência de referências antigas (CPF/Nome separados) | Confirmado — nenhum resquício no frontend |
+| TST691-709 | Campo "Observações": estado inicial, limite de 400 caracteres, persistência, independência de outros campos | Comportamento padrão (igual ao textarea de Configurações) |
+| TST717-736, 739 | Campo "ART": limite de 30 caracteres, aceita letras/números/especiais, persistência, foco | Confirmado |
+| TST745-773 | Campo "Expostos - Mulheres": estado inicial, validação de entrada, persistência, help | Ver bug de zeros à esquerda abaixo |
+| TST776-800 | Campo "Expostos - Homens": mesma bateria | Mesmo comportamento (mesmo componente) |
+| TST751/782/815, 752/783/816 | Número negativo / decimal nos campos "Expostos" | O caractere `-`/`.` é descartado, mas os dígitos ao redor continuam entrando (ex: "-5"→"5", "10.5"→"105") — não é bem "bloqueado", é filtrado caractere a caractere |
+| TST803-808 | Cenários extras de consistência entre "Expostos homens/mulheres" | Aceitos normalmente, sem regra de consistência entre os campos |
+| TST809-824, 830 | Campo "Expostos - PCDs": bateria completa | Confirmado |
+| TST825/826 | Help do campo "Expostos - PCDs" + ortografia | Texto real: *"Informe a quantidade de pessoas com deficiência expostas neste PGR"* — **inclui "de" corretamente**. A suspeita do próprio cenário TST826 ("falta o 'de'") está desatualizada/incorreta; só ficou parecendo confirmada numa 1ª exploração via hover manual, que capturou o texto truncado |
+| TST843-849, 864, 895 | Seção "Equipe": help, botão "Adicionar", modal "Adicionar equipe", botão "Fechar", cancelamento | Confirmado, modal com título/campo/botões batendo com a EF |
+| TST903 | Grid de Equipe vazio | "Sem registros para listar." (mesmo texto de Anexos/Colaboradores) |
+| TST954-956, 958, 961, 967-969, 971-972, 980-990, 1001, 1003, 1005, 1008, 1010-1011 | "Configurações gerais": presença/ordem dos 6 campos, formato do Modelo de documento, vigência, os 4 checkboxes, persistência | Confirmado — os 6 componentes da EF batem com o que a planilha espera (ver achado sobre o 7º item abaixo) |
+| TST989/990 | Checkbox "Incluir histórico de revisões" sem dados | Nasce desabilitado e desmarcado; tooltip bate com a EF |
+
+### Bug real confirmado: "Salvar" bloqueado por race condition (qualquer PGR novo)
+O checkbox "Incluir GHEs sem riscos" (aba Configurações) nasce marcado, mas o textarea obrigatório associado ("Incluir GHEs sem riscos - Descritivo") às vezes não carrega o texto padrão a tempo (parece carregamento assíncrono). Quando isso acontece, o "Salvar" fica bloqueado silenciosamente (campo obrigatório vazio, sem mensagem de erro clara), e o app navega sozinho pra aba Configurações destacando o campo em vermelho. Reproduzido em ~15-20% das tentativas em specs diferentes (Configurações e Referências) — não é específico de nenhuma aba, afeta o salvamento de qualquer PGR novo. `preencherCadastroValidoESalvar()` (`support/pgr.ts`) agora contorna isso checando e restaurando o texto padrão antes de prosseguir.
+
+### Bug real confirmado: zeros à esquerda nos campos "Expostos"
+Os 3 campos ("Expostos - Mulheres", "Expostos - Homens", "Expostos - PCDs") **colapsam para `"0"`** ao digitar qualquer valor com zero à esquerda (ex: `"010"`, `"00025"`, `"007"`), descartando os dígitos seguintes — reproduzido tanto digitando caractere a caractere quanto preenchendo o valor de uma vez, nos 3 campos. Isso contraria o próprio cenário da planilha (TST757/TST788: "Sistema deve aceitar e manter ou normalizar valor") — o sistema real não faz nenhuma das duas coisas, só perde a informação digitada. Mantidos como `test.fixme()` com o bug documentado (TST757, TST788, EXTRA6), seguindo o mesmo critério já usado para o bug de duplicação de Colaboradores (TST1213).
+
+### Achados fora da planilha (EXTRA1-6)
+- **EXTRA1** — o campo "Observações" tem um ícone de assistente de IA ("revisar e aprimorar o texto" / "corrigir ortografia automaticamente") não documentado em nenhum lugar da EF da aba Referências e sem nenhum cenário correspondente na planilha de 354 itens.
+- **EXTRA2** — a EF documenta uma modal inteira "Gravar/Limpar Configuração" atrelada ao campo "Modelo de documento" (permite ao perfil Corporativo bloquear a configuração pros demais perfis); nenhum cenário da planilha testa essa modal. No ambiente real ela não aparece em nenhum estado (a config "Perfil Corporativo poderá bloquear..." parece desligada no painel admin).
+- **EXTRA3** — a EF documenta regras de abrangência hierárquica pro catálogo de "Modelo de documento" (modelo corporativo sempre lista; mesma hierarquia 1 sem hierarquia 2; mesma hierarquia 1 e 2) sem cenário dedicado na planilha.
+- **EXTRA4 (confirmado)** — a EF de "Configurações gerais" documenta um 7º componente, o checkbox "Incluir AEP e/ou AET" (libera a aba "Análises ergonômicas"). A própria planilha já limita TST955 a "6 componentes" sem explicar a ausência do 7º — confirmado ao vivo que esse checkbox não existe no DOM deste ambiente.
+- **EXTRA5** — a EF diz que um profissional com múltiplas linhas no GRID de registro conselho deve aparecer uma vez para cada linha na lista de "Responsável Técnico"; não há cenário na planilha pra esse caso.
+- **EXTRA6 (bug)** — mesmo bug de zeros à esquerda também confirmado no campo "Expostos - PCDs" (a planilha só tinha esse cenário explícito pra Mulheres/Homens).
+
+## Descobertas técnicas adicionais (Aba Referências)
+- Tooltips do Material (`matTooltip`) neste app são **flaky/não confiáveis via hover** em execução automatizada — `.hover()` seguido de esperar `.mat-mdc-tooltip` aparecer falha intermitentemente (mesmo problema já visto no ícone de Anexos). Alternativa confiável descoberta: o CDK sempre registra o texto do tooltip estaticamente num elemento `#cdk-describedby-message-...`, referenciado via `aria-describedby` num ancestral do `mat-icon` — dá pra ler o texto direto (helper `textoTooltipDoIcone()` no spec), sem precisar de hover.
+- Ordenação de listas no formato "CPF - Nome - Registro": comparar a *string inteira* ordena pelo CPF (1º segmento, numérico), não pelo nome — extrair o 2º segmento antes de comparar.
+- O help text da seção "Equipe" existe 2x no DOM (texto visível + cópia de acessibilidade escondida via `aria-describedby`) — `getByText().toBeVisible()` pode resolver pra cópia errada; usar `.toHaveCount(1)` (existência) em vez de exigir visibilidade, quando a duplicidade não dá pra evitar.
+- No modal "Adicionar equipe", depois de selecionar uma opção no multiselect, o painel de opções continua sobrepondo o rodapé da modal — a "tag"/tooltip do item recém-selecionado intercepta o clique no botão "Fechar". Precisa de um `Escape` (fecha o painel) antes de clicar em "Fechar".
+- Os campos "Expostos - Mulheres/Homens/PCDs" são `type="text"` (não `type="number"`), `maxlength=10`, com filtro de caractere: letra é rejeitada totalmente; `-` e `.` são descartados mas os dígitos ao redor continuam entrando.
 
 ## Aba Configurações — Persistência (Salvar/Reabrir)
 `server/src/app/execution/specs/aba-configuracoes.spec.ts` — usa `preencherCadastroValidoESalvar()` (`support/pgr.ts`) pra gerar um cadastro real e salvo, destravando cenários de "salvar e recarregar"/"salvar e reabrir".
