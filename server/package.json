@@ -6,10 +6,15 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test --config=src/app/execution/playwright.config.ts",
-    "test:e2e:headed": "playwright test --config=src/app/execution/playwright.config.ts --headed",
-    "test:e2e:debug": "playwright test --config=src/app/execution/playwright.config.ts --debug",
-    "test:e2e:ui": "playwright test --config=src/app/execution/playwright.config.ts --ui",
+    "test:e2e": "playwright test --config=src/app/playwright.config.ts --project=login --project=ltcat --project=pgr --project=profissional",
+    "test:e2e:login": "playwright test --config=src/app/playwright.config.ts --project=login",
+    "test:e2e:ltcat": "playwright test --config=src/app/playwright.config.ts --project=ltcat",
+    "test:e2e:pgr": "playwright test --config=src/app/playwright.config.ts --project=pgr",
+    "test:e2e:profissional": "playwright test --config=src/app/playwright.config.ts --project=profissional",
+    "test:e2e:scripts": "playwright test --config=src/app/playwright.config.ts --project=scripts --reporter=list",
+    "test:e2e:headed": "playwright test --config=src/app/playwright.config.ts --project=login --project=ltcat --project=pgr --project=profissional --headed",
+    "test:e2e:debug": "playwright test --config=src/app/playwright.config.ts --project=login --project=ltcat --project=pgr --project=profissional --debug",
+    "test:e2e:ui": "playwright test --config=src/app/playwright.config.ts --ui",
     "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {

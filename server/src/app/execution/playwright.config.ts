@@ -2,39 +2,54 @@ import { defineConfig, devices } from "@playwright/test"
 import { env } from "../shared/env"
 
 export default defineConfig({
-  // onde o Playwright procura os arquivos *.spec.ts
-  testDir: "./teste_no_pgr/specs",
-
   // roda um cenário de cada vez — evita dois testes mexendo no mesmo
-  // registro/tela real do PGR ao mesmo tempo e colidindo
+  // registro/tela real do Apollus ao mesmo tempo e colidindo
   fullyParallel: false,
   workers: 1,
 
-  // relatório em HTML, mas "open: never" — sem isso o Playwright abre o
-  // navegador com o relatório sozinho toda vez que um teste roda. Só abre
-  // quando você pedir de propósito com "npm run test:e2e:report"
+  // "open: never" — o relatório só abre quando pedido com "npm run test:e2e:report"
   reporter: [["html", { open: "never" }]],
 
   use: {
-    // permite usar page.goto("/") em vez da URL completa em todo teste
     baseURL: env.baseUrl,
-    // guarda passo a passo só quando um teste falha na 1ª tentativa e refaz
     trace: "on-first-retry",
-    // screenshot automático quando um teste falha — vai virar o "print" do resultado
-    screenshot: "only-on-failure",
-    // o navegador do Playwright abre "limpo", sem o idioma que o Chrome
-    // pessoal já tem salvo — sem isso o PGR carrega em inglês (o app decide
-    // o idioma pelo idioma do navegador) e os locators com texto em
-    // português (ex: getByLabel("Usuário")) não encontram nada
+    screenshot: "on",
+    video: "on",
+    // o navegador do Playwright abre "limpo" e o app decide o idioma pelo
+    // navegador — sem isso carrega em inglês e os locators em português falham
     locale: "pt-BR",
   },
 
-  // por enquanto só Chromium: o PGR é acessado sempre pelo mesmo navegador
-  // corporativo, não precisamos validar em Firefox/Webkit ainda
+  // um project por módulo: roda um com "--project=pgr", ou todos de uma vez
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "login",
+      testDir: "../e2e/specs",
+      testMatch: "login.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "ltcat",
+      testDir: "../e2e/specs/ltcat",
+      // login (~10s) + preenchimento do cadastro passam dos 30s padrão
+      timeout: 60000,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "pgr",
+      testDir: "../e2e/specs/pgr",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "profissional",
+      testDir: "../e2e/specs/profissional",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      // scripts de carga, não são testes de verdade: sem trace nem vídeo
+      name: "scripts",
+      testDir: "./scripts",
+      use: { ...devices["Desktop Chrome"], trace: "off", video: "off" },
+    },
   ],
-
-  // sem webServer: diferente do projeto do curso, aqui não existe servidor
-  // local para subir — o alvo é o sistema real da empresa, já no ar
 })

@@ -12,19 +12,19 @@
 //   08-localizadores (filtros de lista), 09-acoes (dragTo para reordenar)
 // - Modal de confirmação de exclusão → 10-afirmacoes (toBeVisible), 12-espera-automatica
 // - Tooltip do revisor (hover) → 09-acoes (hover), 10-afirmacoes (toContainText)
-import { test, expect, type Page } from "@playwright/test"
+import type { Page } from "@playwright/test"
+import { test, expect } from "../../../support"
 import path from "path"
-import { login } from "../../support/login"
-import { abrirNovoCadastroPgr, abrirAba, preencherCadastroValidoESalvar } from "../../support/pgr"
+import { URLS } from "../../../support/urls"
 
-// arquivos de teste gerados em server/src/app/execution/fixtures/ — ver
+// arquivos de teste gerados em server/src/app/support/fixtures/ — ver
 // nomes/tamanhos abaixo. Conteúdo binário zerado, só pra testar tamanho,
 // não abrem de verdade como PDF.
 // Descoberta (2026-07-23): o limite de "5MB" do sistema é calculado em
 // bytes DECIMAIS (5.000.000), não binários (5×1024×1024 = 5.242.880) — um
 // arquivo de exatos 5.242.880 bytes é REJEITADO. "cinco_mb_decimal.pdf" tem
 // exatos 5.000.000 bytes (o limite real); "grande.pdf" tem 6.000.000 bytes
-const FIXTURES = path.join(process.cwd(), "src", "app", "execution", "fixtures")
+const FIXTURES = path.join(process.cwd(), "src", "app", "support", "fixtures")
 const fixture = (nome: string) => path.join(FIXTURES, nome)
 
 function linhaAnexo(page: Page, textoDescricaoOuArquivo: string) {
@@ -69,10 +69,10 @@ async function abrirEdicaoAnexo(page: Page, textoLinha: string) {
 }
 
 test.describe("Aba Anexos (E2E)", () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page)
-    await abrirNovoCadastroPgr(page)
-    await abrirAba(page, "Anexos")
+  test.beforeEach(async ({ page, login, pgr }) => {
+    await login.entrar()
+    await pgr.abrirNovoCadastro()
+    await pgr.abrirAba("Anexos")
   })
 
   test.describe("Usabilidade + Regras + Validações", () => {
@@ -237,14 +237,14 @@ test.describe("Aba Anexos (E2E)", () => {
       await page.getByLabel(/descri/i).pressSequentially("linha 1\nlinha 2\nlinha 3")
       await expect(page.getByLabel(/descri/i)).toHaveValue("linha 1\nlinha 2\nlinha 3")
     })
-    test("TST1092 - Validar persistência após salvar e reabrir", async ({ page }) => {
+    test("TST1092 - Validar persistência após salvar e reabrir", async ({ page, pgr }) => {
       await preencherModalAnexo(page, "Persistência após reabrir")
       await salvarEFecharModalAnexo(page)
-      await preencherCadastroValidoESalvar(page)
+      await pgr.preencherCadastroValidoESalvar()
       const urlComIdkey = page.url()
-      await page.goto("/apollus/seguranca/programas-laudos/pgr")
+      await page.goto(URLS.pgr)
       await page.goto(urlComIdkey)
-      await abrirAba(page, "Anexos")
+      await pgr.abrirAba("Anexos")
       await expect(linhaAnexo(page, "Persistência após reabrir")).toBeVisible()
     })
     test("TST1093 - Validar salvamento com dados válidos", async ({ page }) => {
@@ -509,12 +509,12 @@ test.describe("Aba Anexos (E2E)", () => {
       await expect(linhaAnexo(page, "Primeiro anexo múltiplo")).toBeVisible()
       await expect(linhaAnexo(page, "Segundo anexo múltiplo")).toBeVisible()
     })
-    test("TST1142 - Validar persistência após salvar e reabrir", async ({ page }) => {
+    test("TST1142 - Validar persistência após salvar e reabrir", async ({ page, pgr }) => {
       await preencherModalAnexo(page, "Persistência do grid")
       await salvarEFecharModalAnexo(page)
-      await preencherCadastroValidoESalvar(page)
+      await pgr.preencherCadastroValidoESalvar()
       await page.reload()
-      await abrirAba(page, "Anexos")
+      await pgr.abrirAba("Anexos")
       await expect(linhaAnexo(page, "Persistência do grid")).toBeVisible()
     })
     test("TST1143 - Validar comportamento com grid vazio", async ({ page }) => {
