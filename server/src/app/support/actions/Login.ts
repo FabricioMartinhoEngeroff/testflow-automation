@@ -38,10 +38,10 @@ export class Login {
     await expect(this.page.getByText(/seja bem-vindo/)).toBeVisible()
   }
 
-  // atalho do "do()" do curso: visita, envia as credenciais do .env e confirma
-  async entrar() {
+  // atalho do "do()" do curso: visita, envia as credenciais (do .env por padrão) e confirma
+  async entrar(credenciais = { usuario: env.usuario, senha: env.senha }) {
     await this.visitar()
-    await this.enviarFormulario(env.usuario, env.senha)
+    await this.enviarFormulario(credenciais.usuario, credenciais.senha)
     await this.estaLogado()
   }
 }

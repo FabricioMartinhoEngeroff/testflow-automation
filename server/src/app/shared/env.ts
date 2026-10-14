@@ -23,3 +23,13 @@ export const env = {
   usuario: obrigatoria("PGR_USUARIO"),
   senha: obrigatoria("PGR_SENHA"),
 }
+
+// PERMISSÕES (desativado):
+// // usuário cujas permissões os testes alteram e verificam; lido só quando
+// // pedido, para não exigir essas variáveis de quem roda os demais testes
+// export function credenciaisPerfil() {
+//   return {
+//     usuario: obrigatoria("PGR_USUARIO_PERFIL"),
+//     senha: obrigatoria("PGR_SENHA_PERFIL"),
+//   }
+// }

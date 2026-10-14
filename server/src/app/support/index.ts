@@ -1,6 +1,8 @@
 import { test as base, expect } from "@playwright/test"
 import { Login } from "./actions/Login"
 import { Pgr } from "./actions/Pgr"
+// PERMISSÕES (desativado): import { PerfilAcessoPage } from "./actions/PerfilAcesso"
+// PERMISSÕES (desativado): import { credenciaisPerfil } from "../shared/env"
 import { LtcatPage } from "./actions/LTCAT/LTCAT"
 import { LtcatCadastroPage } from "./actions/LTCAT/LTCATCadastro"
 import { LtcatReferenciasPage } from "./actions/LTCAT/LTCATReferencias"
@@ -15,7 +17,13 @@ import { LtcatNotificacoesModal } from "./actions/LTCAT/LTCATNotificacoes"
 import { ProfissionalPage } from "./actions/Profissional"
 import { Toast } from "./actions/Toast"
 
+// PERMISSÕES (desativado):
+// // segundo usuário (PGR_USUARIO_PERFIL), em contexto próprio: o `page` normal fica
+// // com o usuário do .env, que edita o perfil de acesso dele
+// type UsuarioPerfil = { page: Page; login: Login; ltcat: LtcatPage; toast: Toast; entrar: () => Promise<void> }
 type Pages = {
+  // PERMISSÕES (desativado): perfilAcessoPage: PerfilAcessoPage
+  // PERMISSÕES (desativado): usuarioPerfil: UsuarioPerfil
   login: Login
   pgr: Pgr
   profissionalPage: ProfissionalPage
@@ -35,6 +43,23 @@ type Pages = {
 
 // cada page é instanciada sob demanda, só nos testes que a pedem no argumento
 export const test = base.extend<Pages>({
+// PERMISSÕES (desativado):
+//   perfilAcessoPage: async ({ page }, use) => {
+//     await use(new PerfilAcessoPage(page))
+//   },
+//   usuarioPerfil: async ({ browser, baseURL, locale }, use) => {
+//     const context = await browser.newContext({ baseURL, locale })
+//     const page = await context.newPage()
+//     const login = new Login(page)
+//     await use({
+//       page,
+//       login,
+//       ltcat: new LtcatPage(page),
+//       toast: new Toast(page),
+//       entrar: () => login.entrar(credenciaisPerfil()),
+//     })
+//     await context.close()
+//   },
   login: async ({ page }, use) => {
     await use(new Login(page))
   },

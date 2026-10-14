@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test"
 import { env } from "./shared/env"
 
+// usa o Edge instalado no Windows em vez do Chromium baixado pelo Playwright
+const edge = { ...devices["Desktop Edge"], channel: "msedge" }
+
 export default defineConfig({
   // roda um cenário de cada vez — evita dois testes mexendo no mesmo
   // registro/tela real do Apollus ao mesmo tempo e colidindo
@@ -13,7 +16,8 @@ export default defineConfig({
   use: {
     baseURL: env.baseUrl,
     trace: "on-first-retry",
-    screenshot: "only-on-failure",
+    screenshot: "on",
+    video: "on",
     // o navegador do Playwright abre "limpo" e o app decide o idioma pelo
     // navegador — sem isso carrega em inglês e os locators em português falham
     locale: "pt-BR",
@@ -25,30 +29,30 @@ export default defineConfig({
       name: "login",
       testDir: "./e2e/specs",
       testMatch: "login.spec.ts",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...edge },
     },
     {
       name: "ltcat",
       testDir: "./e2e/specs/ltcat",
       // login (~10s) + preenchimento do cadastro passam dos 30s padrão
       timeout: 60000,
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...edge },
     },
     {
       name: "pgr",
       testDir: "./e2e/specs/pgr",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...edge },
     },
     {
       name: "profissional",
       testDir: "./e2e/specs/profissional",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...edge },
     },
     {
       // scripts de carga, não são testes de verdade: sem trace nem vídeo
       name: "scripts",
       testDir: "./scripts",
-      use: { ...devices["Desktop Chrome"], trace: "off", video: "off" },
+      use: { ...edge, trace: "off", video: "off" },
     },
   ],
 })

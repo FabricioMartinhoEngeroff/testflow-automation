@@ -8,6 +8,8 @@ function limparVariaveis() {
   delete process.env.PGR_URL
   delete process.env.PGR_USUARIO
   delete process.env.PGR_SENHA
+  delete process.env.PGR_USUARIO_PERFIL
+  delete process.env.PGR_SENHA_PERFIL
 }
 
 describe("env", () => {
@@ -53,4 +55,27 @@ describe("env", () => {
       senha: "senha-teste",
     })
   })
+
+  // PERMISSÕES (desativado):
+//   test("credenciaisPerfil lança erro claro quando faltam as variáveis do usuário de perfil", async () => {
+//     process.env.PGR_URL = "http://localhost:9999"
+//     process.env.PGR_USUARIO = "usuario-teste"
+//     process.env.PGR_SENHA = "senha-teste"
+
+//     const { credenciaisPerfil } = await import("../../../app/shared/env")
+
+//     expect(() => credenciaisPerfil()).toThrow(/PGR_USUARIO_PERFIL/)
+//   })
+
+//   test("credenciaisPerfil retorna usuário e senha do perfil", async () => {
+//     process.env.PGR_URL = "http://localhost:9999"
+//     process.env.PGR_USUARIO = "usuario-teste"
+//     process.env.PGR_SENHA = "senha-teste"
+//     process.env.PGR_USUARIO_PERFIL = "usuario-perfil"
+//     process.env.PGR_SENHA_PERFIL = "senha-perfil"
+
+//     const { credenciaisPerfil } = await import("../../../app/shared/env")
+
+//     expect(credenciaisPerfil()).toStrictEqual({ usuario: "usuario-perfil", senha: "senha-perfil" })
+//   })
 })
