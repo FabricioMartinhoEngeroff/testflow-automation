@@ -1,6 +1,6 @@
 // EF LTCAT > Modal "Histórico de revisões" > Responsável técnico. É o mesmo componente da aba
 // Referências (ver referencias-responsavel-tecnico.spec.ts); aqui só roda num LTCAT novo, sem salvar.
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 const FORMATO_OPCAO = /^\d{3}\.\d{3}\.\d{3}-\d{2} - .+ - .+$/
 const ATAIDE = "211.576.325-48 - Ataíde Soares Pina - 55555555555555555555"

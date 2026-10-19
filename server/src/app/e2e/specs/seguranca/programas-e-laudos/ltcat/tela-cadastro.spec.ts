@@ -1,4 +1,4 @@
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 test.describe("LTCAT - Tela de cadastro (E2E)", () => {
   test.beforeEach(async ({ login, ltcatCadastroPage }) => {

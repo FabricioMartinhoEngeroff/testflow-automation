@@ -18,7 +18,7 @@
 // - Zoom / responsividade / tela notebook vs. tela maior → viewport customizado
 //   via `use: { viewport: {...} }` ou `page.setViewportSize()`, fora do padrão
 //   `fill`/`click` — não coberto ainda na doc compilada em ef/playwright/
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 test.describe("Cenários padrões do sistema (E2E)", () => {
   test.beforeEach(async ({ page, login }) => {

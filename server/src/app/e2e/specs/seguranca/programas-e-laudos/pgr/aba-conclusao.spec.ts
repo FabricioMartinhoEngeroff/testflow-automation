@@ -10,7 +10,7 @@
 // - Refletir no laudo/PGR gerado → depende de geração de arquivo, fora do
 //   escopo de interação direta de UI — provavelmente precisa checar o
 //   documento gerado via download + parsing, não só a tela
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 // texto do placeholder, conferido letra por letra contra a EF (2026-07-23)
 const PLACEHOLDER_CONCLUSAO = "Descreva a conclusão do PGR considerando riscos identificados, medidas de prevenção e recomendações de melhoria. Este capítulo será incluído no documento apenas se houver conteúdo preenchido neste campo."

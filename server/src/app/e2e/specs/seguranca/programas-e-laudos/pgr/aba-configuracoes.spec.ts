@@ -13,8 +13,8 @@
 // - Botão "Restaurar Texto Padrão" → 09-acoes (click) + 10-afirmacoes (toHaveValue)
 // - Campos habilitando/desabilitando conforme outro campo → 12-espera-automatica
 //   (o Playwright já espera o estado "habilitado" mudar sozinho, sem wait manual)
-import { test, expect } from "../../../support"
-import { URLS } from "../../../support/urls"
+import { test, expect } from "../../../../../support"
+import { URLS } from "../../../../../support/urls"
 
 test.describe("Aba Configurações (E2E)", () => {
   test.beforeEach(async ({ page, login, pgr }) => {

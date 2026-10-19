@@ -1,9 +1,9 @@
 // Pesquisa de LTCAT — regressão com usuário de permissão total. Usa a Região 71
 // (onde os scripts de carga criam LTCATs), mas não depende da quantidade nem dos
 // valores exatos dos registros: compara o grid com o que a própria tela retorna.
-import { test, expect } from "../../../support"
-import { ltcatValido } from "../../../support/data/ltcat"
-import type { LtcatPage } from "../../../support/actions/LTCAT/LTCAT"
+import { test, expect } from "../../../../../support"
+import { ltcatValido } from "../../../../../support/data/ltcat"
+import type { LtcatPage } from "../../../../../support/actions/seguranca/programas-e-laudos/ltcat/LTCAT"
 
 const REGIAO = ltcatValido.regiao
 const MSG_CAMPOS_OBRIGATORIOS = "Existem um ou mais campos obrigatórios que não foram preenchidos."

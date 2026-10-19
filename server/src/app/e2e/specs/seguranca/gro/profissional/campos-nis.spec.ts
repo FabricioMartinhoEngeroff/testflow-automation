@@ -3,8 +3,8 @@
 // sem espaços, colar permitido, NÃO obrigatório (revisão c3 de 23/02/2022).
 // Help: "Preencher com o Número de Inscrição do Segurado - NIS, o qual pode
 // ser o PIS, PASEP ou NIT. Informe este campo caso a empresa utilize o PPP."
-import { test, expect } from "../../../support"
-import { cpfUnico } from "../../../support/utils/cpf"
+import { test, expect } from "../../../../../support"
+import { cpfUnico } from "../../../../../support/utils/cpf"
 
 test.describe('Campo "NIS" (E2E)', () => {
   test.beforeEach(async ({ login, profissionalPage }) => {

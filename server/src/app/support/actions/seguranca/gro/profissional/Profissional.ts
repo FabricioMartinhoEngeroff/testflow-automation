@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { URLS } from "../urls"
+import { URLS } from "../../../../urls"
 
 // TODO: confirmar URL real da lista de Profissionais (estimada pelo padrão Apollus)
 

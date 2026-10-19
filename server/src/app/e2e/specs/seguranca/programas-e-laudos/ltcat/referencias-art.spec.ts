@@ -1,6 +1,6 @@
 // EF LTCAT > 5.1 Referências > ART: descritivo, até 30 caracteres, não obrigatório, aceita colar.
-import { test, expect } from "../../../support"
-import { ltcatValido } from "../../../support/data/ltcat"
+import { test, expect } from "../../../../../support"
+import { ltcatValido } from "../../../../../support/data/ltcat"
 
 const LTCAT_SALVO = "/apollus/seguranca/programas-laudos/ltcat/cadastro?idkey=154"
 const TRINTA = "ART-2026/0001 Çãé #@!% abcdefg" // 30 caracteres

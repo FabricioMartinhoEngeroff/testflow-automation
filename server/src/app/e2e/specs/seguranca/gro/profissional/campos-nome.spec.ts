@@ -2,7 +2,7 @@
 // Nome: alfabético, máx 40 chars, sem números, aceita especiais/espaços/acentos,
 // obrigatório, validação de comprimento mínimo por parte do nome.
 // EF Ação 3 do Salvar: primeiro nome ≥ 3 letras, último nome ≥ 2 letras.
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 test.describe('Campo "Nome" (E2E)', () => {
   test.beforeEach(async ({ page, login, profissionalPage }) => {

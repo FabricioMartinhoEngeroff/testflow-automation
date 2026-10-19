@@ -6,7 +6,7 @@
 //
 // CPF: descritivo, máx 11 dígitos, máscara 000.000.000-00, numérico,
 // sem espaços, colar permitido, obrigatório, único no sistema.
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 test.describe('Campo "CPF" (E2E)', () => {
   test.beforeEach(async ({ page, login, profissionalPage }) => {

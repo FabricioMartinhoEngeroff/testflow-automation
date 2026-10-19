@@ -9,8 +9,8 @@
 //   nome_invalido        → "Atenção! Para salvar é necessário que o primeiro nome tenha
 //                           ao menos 3 letras e o último nome ao menos 2 letras."
 //   sucesso              → modal "Profissional salvo com sucesso. Deseja realizar um novo cadastro?"
-import { test, expect } from "../../../support"
-import { cpfUnico } from "../../../support/utils/cpf"
+import { test, expect } from "../../../../../support"
+import { cpfUnico } from "../../../../../support/utils/cpf"
 
 test.describe("Botões do Cadastro de Profissional (E2E)", () => {
   test.beforeEach(async ({ page, login, profissionalPage }) => {

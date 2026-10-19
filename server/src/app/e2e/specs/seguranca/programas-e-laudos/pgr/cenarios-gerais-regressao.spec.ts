@@ -5,7 +5,7 @@
 // TST1064 mora aqui (e não em nenhum arquivo de aba) porque descreve a REMOÇÃO
 // de uma aba antiga ("Metodologia") que não existe mais na tela — é regressão,
 // não comportamento de uma aba atual.
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 test.describe("Regressão — aba Metodologia removida (E2E)", () => {
   test.beforeEach(async ({ page, login }) => {

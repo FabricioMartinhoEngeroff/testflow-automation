@@ -1,6 +1,6 @@
 // EF LTCAT > 5.1 Referências > Condições Operacionais: descritivo, obrigatório, até 1000 caracteres, aceita colar.
-import { test, expect } from "../../../support"
-import { ltcatValido } from "../../../support/data/ltcat"
+import { test, expect } from "../../../../../support"
+import { ltcatValido } from "../../../../../support/data/ltcat"
 
 const MSG_OBRIGATORIOS = "Existem um ou mais campos obrigatórios que não foram preenchidos."
 const MIL = "Condições operacionais: ".padEnd(1000, "x")

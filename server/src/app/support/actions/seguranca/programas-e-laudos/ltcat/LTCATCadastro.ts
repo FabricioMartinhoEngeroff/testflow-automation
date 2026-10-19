@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test"
-import { URLS } from "../../urls"
-import { ltcatValido, type DadosLtcat } from "../../data/ltcat"
+import { URLS } from "../../../../urls"
+import { ltcatValido, type DadosLtcat } from "../../../../data/ltcat"
 import { LtcatConfiguracoesPage, type FatorTroca } from "./LTCATConfiguracoes"
 import { LtcatReferenciasPage } from "./LTCATReferencias"
 

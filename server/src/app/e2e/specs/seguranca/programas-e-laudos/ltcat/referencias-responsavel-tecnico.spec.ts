@@ -1,7 +1,7 @@
 // EF LTCAT > 5.1 Referências > Responsável Técnico (+ botão Limpar).
 // Profissionais usados existem no ambiente dev em 2026-10-19 (catálogo com 47 linhas).
-import { test, expect } from "../../../support"
-import { ltcatValido } from "../../../support/data/ltcat"
+import { test, expect } from "../../../../../support"
+import { ltcatValido } from "../../../../../support/data/ltcat"
 
 const LTCAT_SALVO = "/apollus/seguranca/programas-laudos/ltcat/cadastro?idkey=154"
 const FORMATO_OPCAO = /^\d{3}\.\d{3}\.\d{3}-\d{2} - .+ - .+$/

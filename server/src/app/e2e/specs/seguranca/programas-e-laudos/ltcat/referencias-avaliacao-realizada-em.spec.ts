@@ -1,7 +1,7 @@
 // EF LTCAT > 5.1 Referências > "pass:":
 // descritivo, obrigatório, até 50 caracteres, com help.
-import { test, expect } from "../../../support"
-import { ltcatValido } from "../../../support/data/ltcat"
+import { test, expect } from "../../../../../support"
+import { ltcatValido } from "../../../../../support/data/ltcat"
 
 const LABEL = "Avaliação das condições ambientais de trabalho foi realizada em:"
 const HELP = "Descreva de forma objetiva a data ou período de avaliação. Exemplos: '05 de dezembro de 2018'; ou '18 de maio a 22 de maio de 2018'."
@@ -225,4 +225,33 @@ test.describe("LTCAT - Referências - Avaliação realizada em", () => {
     await page.reload()
     await expect(r.avaliacaoRealizadaEm).toHaveValue(CINQUENTA)
   })
+})
+
+// Chamado #53056: help em ES/EN com erros de tradução e espaço antes da aspa.
+test.describe("LTCAT - Referências - Avaliação realizada em (help em outros idiomas)", () => {
+  test.beforeEach(async ({ login, ltcatCadastroPage }) => {
+    await login.entrar()
+    await ltcatCadastroPage.abrir()
+  })
+
+  const idiomas = [
+    {
+      idioma: "es" as const,
+      titulo: "36 - help em espanhol com 'de' nos exemplos e sem espaço antes da aspa",
+      esperado: "Describa objetivamente la fecha o período de evaluación. Ejemplos: '05 de diciembre de 2018'; o '18 de mayo al 22 de mayo de 2018'.",
+    },
+    {
+      idioma: "en" as const,
+      titulo: "37 - help em inglês sem espaço antes da aspa",
+      esperado: "Describe objectively the date or evaluation period. Examples: '05 December 2018'; or '18 May to 22 May 2018'.",
+    },
+  ]
+  for (const { idioma, titulo, esperado } of idiomas) {
+    // seletor pelo formcontrolname: o nome da aba muda com o idioma ("Referencias")
+    test(titulo, async ({ idioma: i, page }) => {
+      await i.trocar(idioma)
+      const help = page.locator("apls-input[formcontrolname=avaliacaoCondicoesRealizadaEm] apls-icon")
+      await expect(await i.textoDoHelp(help)).toHaveText(esperado)
+    })
+  }
 })

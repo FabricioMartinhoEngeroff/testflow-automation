@@ -3,10 +3,10 @@
 // A maioria roda num LTCAT novo e não salva nada; os de linhas já salvas usam LTCAT_SALVO (154, com 53 revisões).
 import { fileURLToPath } from "node:url"
 import path from "node:path"
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 const LTCAT_SALVO = "/apollus/seguranca/programas-laudos/ltcat/cadastro?idkey=154"
-const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../support/fixtures")
+const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../../support/fixtures")
 
 const dd = (n: number) => String(n).padStart(2, "0")
 const hoje = new Date()

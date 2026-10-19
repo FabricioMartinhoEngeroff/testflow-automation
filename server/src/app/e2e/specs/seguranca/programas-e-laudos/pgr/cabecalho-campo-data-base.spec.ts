@@ -1,6 +1,6 @@
 // diferente do Vitest (que a gente usava describe/test direto sem importar),
 // aqui é outro test runner — o do próprio Playwright — por isso o import
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 // um arquivo por FUNCIONALIDADE (não por cenário) — igual a aula fez com
 // "Criação" agrupando vários testes de todo. Assim, quando formos cobrindo

@@ -6,8 +6,8 @@
 // Campos condicionais à flag (todos c2 turquesa — FORA DO ESCOPO):
 //   Certificado Digital, Senha, Validar, Dados do Certificado.
 // Esses campos são ignorados; apenas a flag em si é testada aqui.
-import { test, expect } from "../../../support"
-import { cpfUnico } from "../../../support/utils/cpf"
+import { test, expect } from "../../../../../support"
+import { cpfUnico } from "../../../../../support/utils/cpf"
 
 // Localiza o checkbox "Responsável Técnico" pelo texto do label visível —
 // mesmo padrão de clicarCheckboxMaterial em support/pgr.ts: o mat-checkbox

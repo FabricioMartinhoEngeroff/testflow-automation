@@ -33,19 +33,29 @@ export default defineConfig({
     },
     {
       name: "ltcat",
-      testDir: "./e2e/specs/ltcat",
+      testDir: "./e2e/specs/seguranca/programas-e-laudos/ltcat",
       // login (~10s) + preenchimento do cadastro passam dos 30s padrão
       timeout: 60000,
       use: { ...edge },
     },
     {
       name: "pgr",
-      testDir: "./e2e/specs/pgr",
+      testDir: "./e2e/specs/seguranca/programas-e-laudos/pgr",
       use: { ...edge },
     },
     {
       name: "profissional",
-      testDir: "./e2e/specs/profissional",
+      testDir: "./e2e/specs/seguranca/gro/profissional",
+      use: { ...edge },
+    },
+    {
+      name: "modelos-de-documento",
+      testDir: "./e2e/specs/cadastros-auxiliares/gerais/modelos-de-documento",
+      use: { ...edge },
+    },
+    {
+      name: "perfis-de-acesso",
+      testDir: "./e2e/specs/perfis-de-acesso/gerenciar-perfis",
       use: { ...edge },
     },
     {

@@ -1,8 +1,8 @@
 // EF LTCAT > 5.1 Referências > Equipe (seção, modal "Adicionar equipe", grid e exclusão).
 // O grid só vai pro banco no Salvar do LTCAT: quase tudo roda num LTCAT novo sem salvar.
 import type { Locator, Page } from "@playwright/test"
-import { test, expect } from "../../../support"
-import { ltcatValido } from "../../../support/data/ltcat"
+import { test, expect } from "../../../../../support"
+import { ltcatValido } from "../../../../../support/data/ltcat"
 
 const MSG = {
   obrigatorios: "Existem um ou mais campos obrigatórios que não foram preenchidos.",

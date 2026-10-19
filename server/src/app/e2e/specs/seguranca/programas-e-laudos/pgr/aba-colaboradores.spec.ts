@@ -10,8 +10,8 @@
 //   (getByRole('row')/filter), 10-afirmacoes (toHaveCount, toHaveText)
 // - Botões Editar/Excluir por linha + modal de confirmação → 09-acoes, 10-afirmacoes
 import type { Page } from "@playwright/test"
-import { test, expect } from "../../../support"
-import { URLS } from "../../../support/urls"
+import { test, expect } from "../../../../../support"
+import { URLS } from "../../../../../support/urls"
 
 // o botão "Adicionar" existe em mais de uma aba (Referências tem um pra
 // Equipe) — sem escopar pela aba certa, getByRole bate em 2 elementos e

@@ -11,7 +11,7 @@
 //   10-afirmacoes (toBeVisible), 12-espera-automatica
 // - Visibilidade condicional por permissão de usuário (INC/ALT) → conecta com
 //   os perfis de teste do projeto (ver [[project_testes_automatizados_playwright]])
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 test.describe("Botões do Cadastro (E2E)", () => {
   test.beforeEach(async ({ page, login, pgr }) => {

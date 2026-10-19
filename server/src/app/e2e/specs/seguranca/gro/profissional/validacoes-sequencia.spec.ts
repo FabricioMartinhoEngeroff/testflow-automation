@@ -8,8 +8,8 @@
 //
 // Cada ação só é executada se a anterior passou. Esses testes validam
 // que o sistema respeita essa precedência e não "pula" etapas.
-import { test, expect } from "../../../support"
-import { cpfUnico } from "../../../support/utils/cpf"
+import { test, expect } from "../../../../../support"
+import { cpfUnico } from "../../../../../support/utils/cpf"
 
 test.describe("Sequência e Precedência das Ações de Validação do Salvar (E2E)", () => {
   test.beforeEach(async ({ page, login, profissionalPage }) => {

@@ -1,29 +1,32 @@
 import { test as base, expect } from "@playwright/test"
 import { Login } from "./actions/Login"
-import { Pgr } from "./actions/Pgr"
-// PERMISSÕES (desativado): import { PerfilAcessoPage } from "./actions/PerfilAcesso"
+import { Pgr } from "./actions/seguranca/programas-e-laudos/pgr/Pgr"
+import { PerfilAcessoPage } from "./actions/perfis-de-acesso/gerenciar-perfis/PerfilAcesso"
 // PERMISSÕES (desativado): import { credenciaisPerfil } from "../shared/env"
-import { LtcatPage } from "./actions/LTCAT/LTCAT"
-import { LtcatCadastroPage } from "./actions/LTCAT/LTCATCadastro"
-import { LtcatReferenciasPage } from "./actions/LTCAT/LTCATReferencias"
-import { LtcatConfiguracoesPage } from "./actions/LTCAT/LTCATConfiguracoes"
-import { LtcatAnexosPage } from "./actions/LTCAT/LTCATAnexos"
-import { LtcatAnexoModal } from "./actions/LTCAT/LTCATAnexoModal"
-import { LtcatColaboradoresPage } from "./actions/LTCAT/LTCATColaboradores"
-import { LtcatColaboradorModal } from "./actions/LTCAT/LTCATColaboradorModal"
-import { LtcatEquipeModal } from "./actions/LTCAT/LTCATEquipeModal"
-import { LtcatConclusaoPage } from "./actions/LTCAT/LTCATConclusao"
-import { LtcatHistoricoRevisoesModal } from "./actions/LTCAT/LTCATHistoricoRevisoes"
-import { LtcatNotificacoesModal } from "./actions/LTCAT/LTCATNotificacoes"
-import { ProfissionalPage } from "./actions/Profissional"
+import { LtcatPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCAT"
+import { LtcatCadastroPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro"
+import { LtcatReferenciasPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATReferencias"
+import { LtcatConfiguracoesPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATConfiguracoes"
+import { LtcatAnexosPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATAnexos"
+import { LtcatAnexoModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATAnexoModal"
+import { LtcatColaboradoresPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATColaboradores"
+import { LtcatColaboradorModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATColaboradorModal"
+import { LtcatEquipeModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATEquipeModal"
+import { LtcatConclusaoPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATConclusao"
+import { LtcatHistoricoRevisoesModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATHistoricoRevisoes"
+import { LtcatNotificacoesModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATNotificacoes"
+import { ProfissionalPage } from "./actions/seguranca/gro/profissional/Profissional"
 import { Toast } from "./actions/Toast"
+import { Idioma } from "./actions/Idioma"
+import { Relatorios } from "./actions/Relatorios"
+import { ModeloDocumentoPage } from "./actions/cadastros-auxiliares/gerais/modelos-de-documento/ModeloDocumento"
 
 // PERMISSÕES (desativado):
 // // segundo usuário (PGR_USUARIO_PERFIL), em contexto próprio: o `page` normal fica
 // // com o usuário do .env, que edita o perfil de acesso dele
 // type UsuarioPerfil = { page: Page; login: Login; ltcat: LtcatPage; toast: Toast; entrar: () => Promise<void> }
 type Pages = {
-  // PERMISSÕES (desativado): perfilAcessoPage: PerfilAcessoPage
+  perfilAcessoPage: PerfilAcessoPage
   // PERMISSÕES (desativado): usuarioPerfil: UsuarioPerfil
   login: Login
   pgr: Pgr
@@ -41,14 +44,17 @@ type Pages = {
   ltcatHistoricoRevisoesModal: LtcatHistoricoRevisoesModal
   ltcatNotificacoesModal: LtcatNotificacoesModal
   toast: Toast
+  idioma: Idioma
+  relatorios: Relatorios
+  modeloDocumentoPage: ModeloDocumentoPage
 }
 
 // cada page é instanciada sob demanda, só nos testes que a pedem no argumento
 export const test = base.extend<Pages>({
+  perfilAcessoPage: async ({ page }, use) => {
+    await use(new PerfilAcessoPage(page))
+  },
 // PERMISSÕES (desativado):
-//   perfilAcessoPage: async ({ page }, use) => {
-//     await use(new PerfilAcessoPage(page))
-//   },
 //   usuarioPerfil: async ({ browser, baseURL, locale }, use) => {
 //     const context = await browser.newContext({ baseURL, locale })
 //     const page = await context.newPage()
@@ -109,6 +115,18 @@ export const test = base.extend<Pages>({
   },
   toast: async ({ page }, use) => {
     await use(new Toast(page))
+  },
+  // volta a conta para português depois do teste, mesmo se ele falhar
+  idioma: async ({ page }, use) => {
+    const idioma = new Idioma(page)
+    await use(idioma)
+    await idioma.restaurar()
+  },
+  relatorios: async ({ page }, use) => {
+    await use(new Relatorios(page))
+  },
+  modeloDocumentoPage: async ({ page }, use) => {
+    await use(new ModeloDocumentoPage(page))
   },
 })
 

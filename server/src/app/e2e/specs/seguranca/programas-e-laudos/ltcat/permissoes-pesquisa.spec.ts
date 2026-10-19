@@ -3,11 +3,11 @@
 // // Permissões na pesquisa de LTCAT. O usuário do .env (PGR_USUARIO) edita o perfil de
 // // acesso do usuário PGR_USUARIO_PERFIL, que então entra e é verificado.
 // // Cada teste altera o perfil real do ambiente e o devolve a "todas as permissões" no fim.
-// import { test, expect } from "../../../support"
-// import { PERFIL_USUARIO_TESTE } from "../../../support/data/perfil"
-// import { ltcatValido } from "../../../support/data/ltcat"
-// import { URLS } from "../../../support/urls"
-// import type { Permissoes } from "../../../support/actions/PerfilAcesso"
+// import { test, expect } from "../../../../../support"
+// import { PERFIL_USUARIO_TESTE } from "../../../../../support/data/perfil"
+// import { ltcatValido } from "../../../../../support/data/ltcat"
+// import { URLS } from "../../../../../support/urls"
+// import type { Permissoes } from "../../../../../support/actions/perfis-de-acesso/gerenciar-perfis/PerfilAcesso"
 
 // const REGIAO = ltcatValido.regiao
 // // a EF diz "esse cadastro", mas o sistema exibe "este cadastro" (conferido em 2026-10-14)

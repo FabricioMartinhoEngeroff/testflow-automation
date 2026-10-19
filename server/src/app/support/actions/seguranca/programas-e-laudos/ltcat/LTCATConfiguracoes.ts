@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { matCheckbox, matRadio } from "../material"
+import { matCheckbox, matRadio } from "../../../material"
 
 export type OrdenacaoGhes =
   | "Código do GHE"

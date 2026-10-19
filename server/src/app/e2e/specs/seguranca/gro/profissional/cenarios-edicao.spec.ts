@@ -5,8 +5,8 @@
 //
 // Estratégia: cria um profissional via UI no beforeEach (com CPF único),
 // captura a URL do cadastro salvo e reabre para edição usando criarEAbrirParaEdicao.
-import { test, expect } from "../../../support"
-import { cpfUnico } from "../../../support/utils/cpf"
+import { test, expect } from "../../../../../support"
+import { cpfUnico } from "../../../../../support/utils/cpf"
 
 test.describe("Edição de Profissional (E2E)", () => {
   let cpfBase: string

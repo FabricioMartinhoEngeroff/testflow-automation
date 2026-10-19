@@ -1,8 +1,8 @@
 // Cenários de integração e fluxo completo do cadastro de Profissional (PROFI206–PROFI230).
 // Testam o sistema de ponta a ponta: todos os campos juntos, múltiplos cadastros,
 // sequência criar → editar, acesso sem permissão e consistência geral.
-import { test, expect } from "../../../support"
-import { cpfUnico } from "../../../support/utils/cpf"
+import { test, expect } from "../../../../../support"
+import { cpfUnico } from "../../../../../support/utils/cpf"
 
 test.describe("Integração e Fluxo Completo (E2E)", () => {
   // ────────────────────────────────────────────────────────────────────────────

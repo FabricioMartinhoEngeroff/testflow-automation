@@ -7,8 +7,8 @@
 // às vezes não carrega o texto padrão a tempo, bloqueando o Salvar de
 // qualquer PGR novo (contornado em support/pgr.ts).
 import type { Locator, Page } from "@playwright/test"
-import { test, expect } from "../../../support"
-import { URLS } from "../../../support/urls"
+import { test, expect } from "../../../../../support"
+import { URLS } from "../../../../../support/urls"
 
 // `.hover()` + esperar `.mat-mdc-tooltip` é flaky neste app (mesmo problema
 // do ícone de Anexos) — o CDK sempre expõe o texto do tooltip num elemento

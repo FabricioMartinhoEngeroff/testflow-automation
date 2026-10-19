@@ -8,8 +8,8 @@
 //
 // Mensagens esperadas (seção 7 da EF):
 //   exclusao → "Registro excluído com sucesso." (tipo Sucesso, cor Verde)
-import { test, expect } from "../../../support"
-import { cpfUnico } from "../../../support/utils/cpf"
+import { test, expect } from "../../../../../support"
+import { cpfUnico } from "../../../../../support/utils/cpf"
 
 test.describe("Exclusão de Profissional (E2E)", () => {
   // ────────────────────────────────────────────────────────────────────────────

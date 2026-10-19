@@ -3,7 +3,7 @@
 // aceita especiais/espaços/caixa alta e baixa, obrigatório.
 // Nota: c9 (verde, 03/02/2026) aumentou o limite para 60 chars — essa melhoria
 // está fora do escopo atual e os testes validam o limite de 30 chars.
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 
 test.describe('Campo "Cargo" (E2E)', () => {
   test.beforeEach(async ({ page, login, profissionalPage }) => {

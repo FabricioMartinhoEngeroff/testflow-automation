@@ -13,9 +13,9 @@
 // - Modal de confirmação de exclusão → 10-afirmacoes (toBeVisible), 12-espera-automatica
 // - Tooltip do revisor (hover) → 09-acoes (hover), 10-afirmacoes (toContainText)
 import type { Page } from "@playwright/test"
-import { test, expect } from "../../../support"
+import { test, expect } from "../../../../../support"
 import path from "path"
-import { URLS } from "../../../support/urls"
+import { URLS } from "../../../../../support/urls"
 
 // arquivos de teste gerados em server/src/app/support/fixtures/ — ver
 // nomes/tamanhos abaixo. Conteúdo binário zerado, só pra testar tamanho,

@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from "@playwright/test"
-import { URLS } from "../../urls"
+import { URLS } from "../../../../urls"
 
 const COLUNAS = { regiao: 1, unidade: 2, setor: 3, responsavel: 4, dataInicio: 5, dataFim: 6, dataBase: 7, revisao: 8 } as const
 const NOMES_COLUNA = { regiao: "Região", unidade: "Unidade", setor: "Setor", responsavel: "Responsável", dataInicio: "Data início", dataFim: "Data fim", dataBase: "Data base", revisao: "Revisão" } as const

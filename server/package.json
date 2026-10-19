@@ -11,6 +11,8 @@
     "test:e2e:ltcat": "playwright test --config=src/app/playwright.config.ts --project=ltcat",
     "test:e2e:pgr": "playwright test --config=src/app/playwright.config.ts --project=pgr",
     "test:e2e:profissional": "playwright test --config=src/app/playwright.config.ts --project=profissional",
+    "test:e2e:modelos-de-documento": "playwright test --config=src/app/playwright.config.ts --project=modelos-de-documento",
+    "test:e2e:perfis-de-acesso": "playwright test --config=src/app/playwright.config.ts --project=perfis-de-acesso",
     "test:e2e:scripts": "playwright test --config=src/app/playwright.config.ts --project=scripts --reporter=list",
     "test:e2e:headed": "playwright test --config=src/app/playwright.config.ts --project=login --project=ltcat --project=pgr --project=profissional --headed",
     "test:e2e:debug": "playwright test --config=src/app/playwright.config.ts --project=login --project=ltcat --project=pgr --project=profissional --debug",

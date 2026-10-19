@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { URLS } from "../urls"
+import { URLS } from "../../../../urls"
 
 export type Aba = "Referências" | "Configurações" | "Anexos" | "Colaboradores" | "Conclusão"
 

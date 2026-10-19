@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { matCheckbox } from "../material"
+import { matCheckbox } from "../../../material"
 
 export type OpcaoReferencias =
   | "Incluir logotipo na capa"
@@ -124,6 +124,26 @@ export class LtcatReferenciasPage {
   // Configurações Gerais
   get modeloDocumento() {
     return this.aba.getByRole("combobox", { name: "Modelo de documento *" })
+  }
+
+  get campoModeloDocumento() {
+    return this.aba.locator("apls-autocomplete[formcontrolname=modeloDocumento] mat-form-field")
+  }
+
+  // Ctrl+A aqui só apagava o último caractere (o clique abre o painel e desfaz a seleção)
+  async apagarModeloDocumento() {
+    await this.modeloDocumento.click()
+    await this.modeloDocumento.selectText()
+    await this.modeloDocumento.press("Backspace")
+    await this.modeloDocumento.press("Escape")
+  }
+
+  get campoVigencia() {
+    return this.aba.locator("mat-form-field.mat-form-field-type-mat-date-range-input")
+  }
+
+  get botaoCalendarioVigencia() {
+    return this.campoVigencia.locator("mat-datepicker-toggle button")
   }
 
   get vigenciaInicio() {
