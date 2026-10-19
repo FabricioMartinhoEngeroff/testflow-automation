@@ -11,6 +11,7 @@ import { LtcatAnexosPage } from "./actions/LTCAT/LTCATAnexos"
 import { LtcatAnexoModal } from "./actions/LTCAT/LTCATAnexoModal"
 import { LtcatColaboradoresPage } from "./actions/LTCAT/LTCATColaboradores"
 import { LtcatColaboradorModal } from "./actions/LTCAT/LTCATColaboradorModal"
+import { LtcatEquipeModal } from "./actions/LTCAT/LTCATEquipeModal"
 import { LtcatConclusaoPage } from "./actions/LTCAT/LTCATConclusao"
 import { LtcatHistoricoRevisoesModal } from "./actions/LTCAT/LTCATHistoricoRevisoes"
 import { LtcatNotificacoesModal } from "./actions/LTCAT/LTCATNotificacoes"
@@ -35,6 +36,7 @@ type Pages = {
   ltcatAnexoModal: LtcatAnexoModal
   ltcatColaboradoresPage: LtcatColaboradoresPage
   ltcatColaboradorModal: LtcatColaboradorModal
+  ltcatEquipeModal: LtcatEquipeModal
   ltcatConclusaoPage: LtcatConclusaoPage
   ltcatHistoricoRevisoesModal: LtcatHistoricoRevisoesModal
   ltcatNotificacoesModal: LtcatNotificacoesModal
@@ -92,6 +94,9 @@ export const test = base.extend<Pages>({
   },
   ltcatColaboradorModal: async ({ page }, use) => {
     await use(new LtcatColaboradorModal(page))
+  },
+  ltcatEquipeModal: async ({ page }, use) => {
+    await use(new LtcatEquipeModal(page))
   },
   ltcatConclusaoPage: async ({ page }, use) => {
     await use(new LtcatConclusaoPage(page))
