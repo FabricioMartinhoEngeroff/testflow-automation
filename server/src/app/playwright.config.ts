@@ -34,8 +34,35 @@ export default defineConfig({
     {
       name: "ltcat",
       testDir: "./e2e/specs/seguranca/programas-e-laudos/ltcat",
+      testIgnore: ["permissoes-*.spec.ts", "configuracoes-reflexo-config-geral.spec.ts"],
       // login (~10s) + preenchimento do cadastro passam dos 30s padrão
       timeout: 60000,
+      use: { ...edge },
+    },
+    {
+      // mexe na Configuração Geral (vale para todo o ambiente): roda sozinho, um teste por vez
+      name: "ltcat-config-geral",
+      testDir: "./e2e/specs/seguranca/programas-e-laudos/ltcat",
+      testMatch: "configuracoes-reflexo-config-geral.spec.ts",
+      workers: 1,
+      timeout: 240000,
+      use: { ...edge },
+    },
+    {
+      // loga cada usuário QAutomatizador_* e salva a sessão em .auth/ (dependência dos testes de permissão)
+      name: "auth",
+      testDir: "./e2e",
+      testMatch: "auth.setup.ts",
+      fullyParallel: true,
+      use: { ...edge, video: "off", screenshot: "only-on-failure" },
+    },
+    {
+      // cada teste já entra logado; os que gravam usam um ano só deles: pode rodar em paralelo (--workers)
+      name: "ltcat-permissoes",
+      testDir: "./e2e/specs/seguranca/programas-e-laudos/ltcat",
+      testMatch: "permissoes-*.spec.ts",
+      dependencies: ["auth"],
+      fullyParallel: true,
       use: { ...edge },
     },
     {

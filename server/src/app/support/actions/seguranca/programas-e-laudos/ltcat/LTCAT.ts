@@ -41,6 +41,88 @@ export class LtcatPage {
     return this.page.locator("button:visible", { hasText: "clear" })
   }
 
+  // mesmo botão: expand_less recolhe, expand_more expande (conferido em 2026-10-20; a EF fala em
+  // keyboard_arrow_up/down); tem cópia oculta no DOM
+  get botaoRecolherFiltros() {
+    return this.page.locator("button:visible", { hasText: "expand_less" })
+  }
+
+  get botaoExpandirFiltros() {
+    return this.page.locator("button:visible", { hasText: "expand_more" })
+  }
+
+  // limpa os filtros que o app lembrou e garante a Região; funciona tanto se a tela abrir vazia
+  // quanto já com a Região preenchida (usuário com permissão numa unidade só)
+  async filtrarPorRegiao(regiao: string) {
+    if (await this.botaoLimpar.isVisible()) await this.botaoLimpar.click()
+    if ((await this.regiao.inputValue()) !== regiao) await this.selecionarOpcao(this.regiao, regiao)
+    await expect(this.regiao).toHaveValue(regiao)
+  }
+
+  // Região/Unidade/Setor viram multiselect quando o usuário tem mais de uma opção: o painel tem
+  // "Todos", o contador "n/total", o X (desmarca tudo) e o ✓ "Confirmar" (leva a seleção pro campo)
+  get painelMultiplo() {
+    return this.page.locator(".multiple-panel")
+  }
+
+  get marcarTodos() {
+    return this.painelMultiplo.locator(".apls-checkbox-todos")
+  }
+
+  get contadorSelecao() {
+    return this.painelMultiplo.locator("mat-label")
+  }
+
+  get botaoDesmarcarTodos() {
+    return this.painelMultiplo.locator("button", { hasText: /^\s*close\s*$/ })
+  }
+
+  get botaoConfirmarSelecao() {
+    return this.painelMultiplo.locator("button", { hasText: /^\s*check\s*$/ })
+  }
+
+  opcao(texto: string | RegExp) {
+    return this.page.locator("mat-option", { hasText: texto }).first()
+  }
+
+  get primeiraOpcao() {
+    return this.page.locator("mat-option").first()
+  }
+
+  get opcoesMarcadas() {
+    return this.page.locator("mat-option.apls-selected")
+  }
+
+  // marca as opções no painel e confirma no ✓
+  async marcarEConfirmar(campo: Locator, ...textos: string[]) {
+    await campo.click()
+    for (const texto of textos) await this.opcao(texto).click()
+    await this.botaoConfirmarSelecao.click()
+    await expect(this.painelMultiplo).toBeHidden()
+  }
+
+  // painel do select Ano: topo com o rótulo "Ano", X (limpa a seleção) e ✓, depois a lista de anos
+  get painelAno() {
+    return this.page.locator(".mat-select-panel")
+  }
+
+  get rotuloPainelAno() {
+    return this.painelAno.locator(".top-panel mat-label")
+  }
+
+  get botaoLimparAno() {
+    return this.painelAno.locator(".top-panel button", { hasText: /^\s*close\s*$/ })
+  }
+
+  get botaoConfirmarAno() {
+    return this.painelAno.locator(".top-panel button", { hasText: /^\s*check\s*$/ })
+  }
+
+  // ano mostrado no select ("" quando nada está selecionado)
+  async anoSelecionado() {
+    return (await this.ano.innerText()).match(/\d{4}/)?.[0] ?? ""
+  }
+
   get paginador() {
     return this.page.locator("mat-paginator")
   }
@@ -59,6 +141,22 @@ export class LtcatPage {
 
   get menuDaLinha() {
     return this.page.locator(".mat-menu-item")
+  }
+
+  // nome exato: "Gerar LTCAT" também é trecho de "Gerar LTCAT assinado digitalmente"
+  itemDoMenu(nome: string) {
+    return this.page.getByRole("menuitem", { name: nome, exact: true })
+  }
+
+  // o Ano só lista anos que têm LTCAT; false quando o ano não está entre as opções
+  async selecionarAno(ano: number) {
+    const opcoes = await this.opcoesDe(this.ano)
+    if (!opcoes.some((o) => o.trim() === String(ano))) {
+      await this.page.keyboard.press("Escape")
+      return false
+    }
+    await this.page.locator("mat-option", { hasText: new RegExp(`^\\s*${ano}\\s*$`) }).click()
+    return true
   }
 
   get grade() {
@@ -94,6 +192,28 @@ export class LtcatPage {
     return this.page.getByRole("button", { name: "Próxima página" })
   }
 
+  get botaoPaginaAnterior() {
+    return this.page.getByRole("button", { name: "Página anterior" })
+  }
+
+  get botaoPrimeiraPagina() {
+    return this.page.getByRole("button", { name: "Primeira página" })
+  }
+
+  get botaoUltimaPagina() {
+    return this.page.getByRole("button", { name: "Última página" })
+  }
+
+  // títulos das colunas na ordem da tela (sem a coluna vazia e a do menu)
+  async titulosDasColunas() {
+    const textos = await this.grade.locator("thead th").allInnerTexts()
+    return textos.map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean)
+  }
+
+  cabecalho(coluna: Coluna) {
+    return this.page.locator("[aria-sort]", { hasText: NOMES_COLUNA[coluna] }).first()
+  }
+
   async definirItensPorPagina(quantidade: number) {
     await this.selecionarOpcao(this.itensPorPagina, new RegExp(`^\\s*${quantidade}\\s*$`))
     await expect(this.itensPorPagina).toHaveText(String(quantidade))
@@ -120,6 +240,12 @@ export class LtcatPage {
     return true
   }
 
+  async celulasDeTodasAsPaginas(coluna: Coluna) {
+    const valores = await this.celulas(coluna)
+    while (await this.irParaProximaPagina()) valores.push(...(await this.celulas(coluna)))
+    return valores
+  }
+
   async pesquisar() {
     await this.botaoPesquisar.click()
     await this.linhas.first().waitFor({ state: "visible" })
@@ -133,8 +259,22 @@ export class LtcatPage {
     return this.page.locator("[aria-sort]", { hasText: NOMES_COLUNA[coluna] }).first().getAttribute("aria-sort")
   }
 
+  // o app lembra a última ordenação do usuário: clica até chegar no sentido pedido (ciclo de 3)
+  async ordenarAte(coluna: Coluna, sentido: "ascending" | "descending") {
+    for (let i = 0; i < 3 && (await this.sentidoDaOrdenacao(coluna)) !== sentido; i++) {
+      const antes = await this.sentidoDaOrdenacao(coluna)
+      await this.ordenarPor(coluna)
+      await expect.poll(() => this.sentidoDaOrdenacao(coluna)).not.toBe(antes)
+    }
+    await expect.poll(() => this.sentidoDaOrdenacao(coluna)).toBe(sentido)
+  }
+
   async abrirMenuDaLinha(indice = 0) {
     await this.linhas.nth(indice).locator("button").last().click()
+  }
+
+  urlAtual() {
+    return this.page.url()
   }
 
   async abrir() {

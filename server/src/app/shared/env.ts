@@ -24,6 +24,12 @@ export const env = {
   senha: obrigatoria("PGR_SENHA"),
 }
 
+// senha única dos usuários QAutomatizador_* (support/usuarios.ts); lida só quando pedida,
+// para não exigir a variável de quem roda os demais testes
+export function senhaUsuariosQa() {
+  return obrigatoria("PGR_SENHA_QA")
+}
+
 // PERMISSÕES (desativado):
 // // usuário cujas permissões os testes alteram e verificam; lido só quando
 // // pedido, para não exigir essas variáveis de quem roda os demais testes

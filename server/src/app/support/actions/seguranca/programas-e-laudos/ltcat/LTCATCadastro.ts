@@ -60,6 +60,25 @@ export class LtcatCadastroPage {
     return this.page.getByRole("button", { name: "Voltar" })
   }
 
+  // os do rodapé com ícone de ajuda têm o nome começando pelo texto
+  get botaoGerarLaudo() {
+    return this.page.getByRole("button", { name: /^Gerar laudo/ })
+  }
+
+  get botaoDuplicar() {
+    return this.page.getByRole("button", { name: "Duplicar", exact: true })
+  }
+
+  // LTCAT já assinado: ver os dados da assinatura e gerar o laudo assinado
+  get botaoDadosAssinatura() {
+    return this.page.getByRole("button", { name: /^Dados da assinatura digital/ })
+  }
+
+  // LTCAT ainda não assinado
+  get botaoAssinarDigitalmente() {
+    return this.page.getByRole("button", { name: /^Assinar digitalmente/ })
+  }
+
   get mensagemSalvoComSucesso() {
     return this.page.getByText("Registro salvo com sucesso")
   }

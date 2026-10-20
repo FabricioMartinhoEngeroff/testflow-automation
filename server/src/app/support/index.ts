@@ -17,8 +17,10 @@ import { LtcatHistoricoRevisoesModal } from "./actions/seguranca/programas-e-lau
 import { LtcatNotificacoesModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATNotificacoes"
 import { ProfissionalPage } from "./actions/seguranca/gro/profissional/Profissional"
 import { Toast } from "./actions/Toast"
+import { MenuLateral } from "./actions/MenuLateral"
 import { Idioma } from "./actions/Idioma"
 import { Relatorios } from "./actions/Relatorios"
+import { ConfiguracaoGeralPage } from "./actions/seguranca/programas-e-laudos/ConfiguracaoGeral"
 import { ModeloDocumentoPage } from "./actions/cadastros-auxiliares/gerais/modelos-de-documento/ModeloDocumento"
 
 // PERMISSÕES (desativado):
@@ -44,9 +46,11 @@ type Pages = {
   ltcatHistoricoRevisoesModal: LtcatHistoricoRevisoesModal
   ltcatNotificacoesModal: LtcatNotificacoesModal
   toast: Toast
+  menuLateral: MenuLateral
   idioma: Idioma
   relatorios: Relatorios
   modeloDocumentoPage: ModeloDocumentoPage
+  configuracaoGeralPage: ConfiguracaoGeralPage
 }
 
 // cada page é instanciada sob demanda, só nos testes que a pedem no argumento
@@ -116,6 +120,9 @@ export const test = base.extend<Pages>({
   toast: async ({ page }, use) => {
     await use(new Toast(page))
   },
+  menuLateral: async ({ page }, use) => {
+    await use(new MenuLateral(page))
+  },
   // volta a conta para português depois do teste, mesmo se ele falhar
   idioma: async ({ page }, use) => {
     const idioma = new Idioma(page)
@@ -127,6 +134,9 @@ export const test = base.extend<Pages>({
   },
   modeloDocumentoPage: async ({ page }, use) => {
     await use(new ModeloDocumentoPage(page))
+  },
+  configuracaoGeralPage: async ({ page }, use) => {
+    await use(new ConfiguracaoGeralPage(page, new MenuLateral(page)))
   },
 })
 
