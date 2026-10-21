@@ -209,6 +209,23 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(page).not.toHaveURL(/idkey=/)
     })
 
+    // planilha: o destaque vermelho de um obrigatório que ninguém mexeu não pode sumir ao trocar H1 ou H2
+    for (const { titulo, trocar } of [
+      { titulo: "10b - trocar a Região (H1) mantém o Modelo em vermelho", trocar: (c: import("../../../../../support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro").LtcatCadastroPage) => c.selecionarOpcao(c.regiao, /70 - /) },
+      { titulo: "10c - trocar a Unidade (H2) mantém o Modelo em vermelho", trocar: (c: import("../../../../../support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro").LtcatCadastroPage) => c.selecionarOpcao(c.unidade, /711001/) },
+    ]) {
+      test(titulo, async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast }) => {
+        await cadastro.preencherObrigatorios()
+        await cadastro.preencherConfiguracoesObrigatorias()
+        await r.apagarModeloDocumento()
+        await cadastro.salvar()
+        await toast.temTexto(MSG_OBRIGATORIOS)
+        await expect(r.campoModeloDocumento).toHaveClass(/mat-form-field-invalid/)
+        await trocar(cadastro)
+        await expect(r.campoModeloDocumento).toHaveClass(/mat-form-field-invalid/)
+      })
+    }
+
     test("11 - apagar e escolher o modelo de novo mantém a seleção", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
       await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
       // com uma opção só, o sistema pode trazê-la de volta sozinho depois de apagar (regra da EF)

@@ -18,6 +18,8 @@ export class ConfiguracaoGeralPage {
     await item.click()
     await this.page.getByText("Defina as configurações padrão").waitFor()
     await this.linhas.first().waitFor()
+    // o botão flutuante de ajuda cobre o ícone da última linha e intercepta o clique
+    await this.page.addStyleTag({ content: "apls-menu-ajuda { display: none !important; }" })
   }
 
   private get linhas() {

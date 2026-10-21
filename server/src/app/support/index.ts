@@ -16,6 +16,7 @@ import { LtcatConclusaoPage } from "./actions/seguranca/programas-e-laudos/ltcat
 import { LtcatHistoricoRevisoesModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATHistoricoRevisoes"
 import { LtcatNotificacoesModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATNotificacoes"
 import { ProfissionalPage } from "./actions/seguranca/gro/profissional/Profissional"
+import { ConfigGheAbaGeraisPage } from "./actions/seguranca/gro/configuracoes/config_GHE_aba_gerais"
 import { Toast } from "./actions/Toast"
 import { MenuLateral } from "./actions/MenuLateral"
 import { Idioma } from "./actions/Idioma"
@@ -51,6 +52,7 @@ type Pages = {
   relatorios: Relatorios
   modeloDocumentoPage: ModeloDocumentoPage
   configuracaoGeralPage: ConfiguracaoGeralPage
+  configGheAbaGeraisPage: ConfigGheAbaGeraisPage
 }
 
 // cada page é instanciada sob demanda, só nos testes que a pedem no argumento
@@ -137,6 +139,9 @@ export const test = base.extend<Pages>({
   },
   configuracaoGeralPage: async ({ page }, use) => {
     await use(new ConfiguracaoGeralPage(page, new MenuLateral(page)))
+  },
+  configGheAbaGeraisPage: async ({ page }, use) => {
+    await use(new ConfigGheAbaGeraisPage(page, new MenuLateral(page)))
   },
 })
 

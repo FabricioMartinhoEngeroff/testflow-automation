@@ -34,7 +34,7 @@ export default defineConfig({
     {
       name: "ltcat",
       testDir: "./e2e/specs/seguranca/programas-e-laudos/ltcat",
-      testIgnore: ["permissoes-*.spec.ts", "configuracoes-reflexo-config-geral.spec.ts"],
+      testIgnore: ["permissoes-*.spec.ts", "configuracoes-reflexo-config-geral.spec.ts", "configuracoes-comportamento.spec.ts"],
       // login (~10s) + preenchimento do cadastro passam dos 30s padrão
       timeout: 60000,
       use: { ...edge },
@@ -43,7 +43,7 @@ export default defineConfig({
       // mexe na Configuração Geral (vale para todo o ambiente): roda sozinho, um teste por vez
       name: "ltcat-config-geral",
       testDir: "./e2e/specs/seguranca/programas-e-laudos/ltcat",
-      testMatch: "configuracoes-reflexo-config-geral.spec.ts",
+      testMatch: ["configuracoes-reflexo-config-geral.spec.ts", "configuracoes-comportamento.spec.ts"],
       workers: 1,
       timeout: 240000,
       use: { ...edge },

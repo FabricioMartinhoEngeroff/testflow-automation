@@ -62,8 +62,28 @@ export class LtcatConfiguracoesPage {
     }
   }
 
+  // leva a opção ao estado pedido; não clica se já está nele
+  async definir(texto: OpcaoConfiguracoes, marcado: boolean) {
+    if ((await this.opcao(texto).locator("input").isChecked()) !== marcado) await this.marcar(texto)
+  }
+
   ordenacao(texto: OrdenacaoGhes) {
     return matRadio(this.page, texto)
+  }
+
+  // clica no rótulo: o <input> do radio fica escondido atrás da camada visual
+  async escolherOrdenacao(texto: OrdenacaoGhes) {
+    await this.ordenacao(texto).locator("label").click()
+  }
+
+  get ordenacoesMarcadas() {
+    return this.page.locator('mat-radio-group[formcontrolname="ordenarGhesPor"] mat-radio-button.mat-radio-checked')
+  }
+
+  // cadastro novo sem fator escolhido é barrado no Salvar; com a Configuração Geral em Sugerir ele já vem marcado
+  async garantirFatorDeTroca(fator: FatorTroca = "q5") {
+    const marcado = (f: FatorTroca) => this.fatorDeTroca(f).locator("input").isChecked()
+    if (!(await marcado("q3")) && !(await marcado("q5"))) await this.fatorDeTroca(fator).locator("label").click()
   }
 
   fatorDeTroca(fator: FatorTroca) {
