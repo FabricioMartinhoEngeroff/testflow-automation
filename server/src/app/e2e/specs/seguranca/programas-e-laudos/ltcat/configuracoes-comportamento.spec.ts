@@ -154,27 +154,58 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
     })
 
     // GRO > Configurações > Configurações - GHE > Gerais é global do ambiente: o valor original volta no finally
-    test("11 - a flag acompanha a exibição da aba 'Atividades x Fatores de Risco' no GRO (Oculta esconde, Visível mostra)", async ({ configGheAbaGeraisPage: gro, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    // ciclo num teste só (sem dois workers disputando o GRO), navegando pelo menu como o usuário faz, sem recarregar a página
+    test("11 - a flag acompanha a exibição da aba 'Atividades x Fatores de Risco' no GRO (Oculta esconde, Visível mostra)", async ({ menuLateral: menu, configGheAbaGeraisPage: gro, ltcatPage: lista, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       test.setTimeout(480000)
-      await page.goto(URLS.ltcat)
+      // durante a animação de rota a tela que sai e a que entra ficam juntas no DOM (dois "Região *")
+      const telaUnica = () => expect(page.getByRole("combobox", { name: "Região *" })).toHaveCount(1, { timeout: 15000 })
+      const irParaListaLtcat = async () => {
+        const item = menu.item(/LTCAT/).locator("visible=true")
+        if (!(await item.isVisible())) await menu.grupo("Programas e Laudos").click()
+        await item.click()
+        const sair = page.getByRole("button", { name: "Sair sem salvar" })
+        await lista.titulo.or(sair).first().waitFor()
+        if (await sair.isVisible()) await sair.click()
+        await lista.titulo.waitFor()
+        await telaUnica()
+        // a lista lembra o filtro entre idas e vindas pelo menu
+        if (!(await lista.regiao.inputValue())) await lista.marcarEConfirmar(lista.regiao, ltcatValido.regiao)
+      }
+      const flagNaAba = async () => {
+        await cadastro.abrirAba("Configurações")
+        await c.opcao("EPCs").waitFor()
+        return c.opcao(RISCOS)
+      }
+
       await gro.abrir()
       const original = await gro.lerExibicao()
-      // muda no GRO, abre o LTCAT novo e confere a flag; volta ao GRO e repete com o outro valor
-      const conferir = async (valor: "Visível" | "Oculta") => {
-        await page.goto(URLS.ltcat)
-        await gro.abrir()
-        await gro.definirExibicao(valor)
-        if (await gro.botaoSalvar.isEnabled()) await gro.salvar()
-        await cadastro.abrir()
-        await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
-        await cadastro.abrirAba("Configurações")
-        await expect(c.opcao(RISCOS), `GRO em ${valor}`).toHaveCount(valor === "Oculta" ? 0 : 1)
-      }
       try {
-        await conferir("Oculta")
-        await conferir("Visível")
+        for (const valor of ["Oculta", "Visível"] as const) {
+          const esperado = valor === "Oculta" ? 0 : 1
+          await test.step(`GRO em ${valor}`, async () => {
+            await gro.abrir()
+            await gro.definirExibicao(valor)
+            if (await gro.botaoSalvar.isEnabled()) await gro.salvar()
+          })
+          await test.step(`LTCAT novo com GRO em ${valor}`, async () => {
+            await irParaListaLtcat()
+            await lista.botaoNovo.click()
+            await cadastro.titulo.waitFor()
+            await telaUnica()
+            await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
+            await expect(await flagNaAba(), `novo, GRO em ${valor}`).toHaveCount(esperado)
+          })
+          await test.step(`LTCAT já cadastrado com GRO em ${valor}`, async () => {
+            await irParaListaLtcat()
+            await lista.botaoPesquisar.click()
+            await expect(lista.mensagemSemRegistros).toHaveCount(0)
+            await lista.linhas.first().dblclick()
+            await cadastro.titulo.waitFor()
+            await telaUnica()
+            await expect(await flagNaAba(), `cadastrado, GRO em ${valor}`).toHaveCount(esperado)
+          })
+        }
       } finally {
-        await page.goto(URLS.ltcat)
         await gro.abrir()
         await gro.definirExibicao(original)
         if (await gro.botaoSalvar.isEnabled()) await gro.salvar()

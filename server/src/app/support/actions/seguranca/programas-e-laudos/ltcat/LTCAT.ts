@@ -29,7 +29,8 @@ export class LtcatPage {
   }
 
   get botaoNovo() {
-    return this.page.getByRole("button", { name: "Novo" })
+    // exato: com o menu lateral aberto também existe "Gestão de Ocorrências - Novo"
+    return this.page.getByRole("button", { name: "Novo", exact: true })
   }
 
   // o id #btn-search aparece duplicado no DOM (um fica oculto), por isso o :visible
@@ -77,8 +78,9 @@ export class LtcatPage {
     return this.painelMultiplo.locator("button", { hasText: /^\s*close\s*$/ })
   }
 
+  // ícone "done" (em 2026-10-21); antes era "check"
   get botaoConfirmarSelecao() {
-    return this.painelMultiplo.locator("button", { hasText: /^\s*check\s*$/ })
+    return this.painelMultiplo.locator("button", { hasText: /^\s*(check|done)\s*$/ })
   }
 
   opcao(texto: string | RegExp) {

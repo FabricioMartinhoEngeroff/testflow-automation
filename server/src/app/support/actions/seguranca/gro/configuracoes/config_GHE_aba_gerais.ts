@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test"
 import type { MenuLateral } from "../../../MenuLateral"
-import { matRadio } from "../../../material"
 
 export type ExibicaoAtividadesRiscos = "Visível" | "Oculta"
 
@@ -18,12 +17,22 @@ export class ConfigGheAbaGeraisPage {
       await configuracoes.click()
     }
     await item.click()
+    // vindo de um cadastro com alterações (ex.: LTCAT novo), o Apollus pergunta antes de sair
+    const sair = this.page.getByRole("button", { name: "Sair sem salvar" })
+    await this.abaGerais.or(sair).first().waitFor()
+    if (await sair.isVisible()) await sair.click()
+    // a tela abre na aba EPC/EPI, que também tem um radio Visível/Oculta (o do "Enviar eSocial" dos EPIs)
+    await this.abaGerais.click()
     await this.exibicao("Visível").waitFor()
+  }
+
+  get abaGerais() {
+    return this.page.getByRole("tab", { name: "Gerais", exact: true })
   }
 
   // "Por padrão, a aba 'Atividades x Fatores de risco' deverá estar:"
   exibicao(valor: ExibicaoAtividadesRiscos) {
-    return matRadio(this.page, valor)
+    return this.page.locator('mat-radio-group[formcontrolname="exibicaoAtividadesRiscos"]').locator("mat-radio-button", { hasText: valor })
   }
 
   async lerExibicao(): Promise<ExibicaoAtividadesRiscos> {
