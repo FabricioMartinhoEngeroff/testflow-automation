@@ -20,6 +20,7 @@ import { ConfigGheAbaGeraisPage } from "./actions/seguranca/gro/configuracoes/co
 import { Toast } from "./actions/Toast"
 import { MenuLateral } from "./actions/MenuLateral"
 import { Idioma } from "./actions/Idioma"
+import { Revisor } from "./actions/Revisor"
 import { Relatorios } from "./actions/Relatorios"
 import { ConfiguracaoGeralPage } from "./actions/seguranca/programas-e-laudos/ConfiguracaoGeral"
 import { ModeloDocumentoPage } from "./actions/cadastros-auxiliares/gerais/modelos-de-documento/ModeloDocumento"
@@ -49,6 +50,7 @@ type Pages = {
   toast: Toast
   menuLateral: MenuLateral
   idioma: Idioma
+  revisor: Revisor
   relatorios: Relatorios
   modeloDocumentoPage: ModeloDocumentoPage
   configuracaoGeralPage: ConfiguracaoGeralPage
@@ -130,6 +132,9 @@ export const test = base.extend<Pages>({
     const idioma = new Idioma(page)
     await use(idioma)
     await idioma.restaurar()
+  },
+  revisor: async ({ page }, use) => {
+    await use(new Revisor(page))
   },
   relatorios: async ({ page }, use) => {
     await use(new Relatorios(page))

@@ -16,6 +16,8 @@ export class Idioma {
     await this.page.locator("apls-dados-usuario mat-select").click()
     await this.page.locator(`mat-option[value="${idioma}"]`).click()
     await this.page.keyboard.press("Escape")
+    // recarregar antes de a preferência chegar ao servidor deixa a tela no idioma antigo (visto ao alternar pt/en/es em sequência)
+    await this.page.waitForLoadState("networkidle")
     await this.page.reload()
     this.atual = idioma
   }
