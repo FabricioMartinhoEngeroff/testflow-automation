@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node", "@playwright/test"],
+    "paths": {
+      "@support": ["./support"],
+      "@support/*": ["./support/*"],
+      "@shared/*": ["./shared/*"]
+    }
+  },
+  "include": ["specs", "support", "scripts", "shared", "__tests__", "playwright.config.ts", "vitest.config.ts"]
+}

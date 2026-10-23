@@ -1,6 +1,12 @@
 node_modules/
-frontend/node_modules/
-server/node_modules/
 dist/
 .env
 *.local
+
+# saídas do Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.auth/
+downloads/
