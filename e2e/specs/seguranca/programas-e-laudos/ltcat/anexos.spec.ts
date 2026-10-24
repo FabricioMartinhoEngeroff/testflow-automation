@@ -5,6 +5,7 @@ import type { Page } from "@playwright/test"
 import { test, expect } from "@support"
 import type { LtcatAnexosPage } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATAnexos"
 import type { LtcatAnexoModal } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATAnexoModal"
+import type { ToastPage } from "@support/actions/Toast"
 
 const arquivo = (nome: string) => path.join(process.cwd(), "support", "arquivos", nome)
 
@@ -134,10 +135,10 @@ test.describe("LTCAT - Anexos", () => {
       { id: "TST1139", titulo: "texto .md", arq: "texto.md" },
     ]
     for (const { id, titulo, arq } of recusados) {
-      test(`${id} - upload recusado: ${titulo}`, async ({ ltcatAnexoModal: m, page }) => {
+      test(`${id} - upload recusado: ${titulo}`, async ({ ltcatAnexoModal: m, toast }) => {
         await m.anexar(arquivo(arq))
         // a mesma mensagem cobre tamanho e extensão
-        await expect(page.locator("apls-toast").filter({ hasText: /Permitido somente arquivos/ })).toBeVisible()
+        await toast.temTexto(/Permitido somente arquivos/)
         await expect(m.areaDeArquivo).toBeVisible()
       })
     }
@@ -163,18 +164,18 @@ test.describe("LTCAT - Anexos", () => {
       await expect(m.areaDeArquivo).toBeVisible()
     })
 
-    test("TST1143 - anexo obrigatório: salvar só com descrição é bloqueado", async ({ ltcatAnexoModal: m, ltcatAnexosPage: a, page }) => {
+    test("TST1143 - anexo obrigatório: salvar só com descrição é bloqueado", async ({ ltcatAnexoModal: m, ltcatAnexosPage: a, toast }) => {
       await m.descricao.fill("Sem arquivo")
       await m.botaoSalvar.click()
-      await expect(page.locator("apls-toast").filter({ hasText: /campos obrigatórios/ })).toBeVisible()
+      await toast.temTexto(/campos obrigatórios/)
       await expect(m.titulo).toBeVisible()
       await expect(a.linhas.filter({ hasText: "Sem arquivo" })).toHaveCount(0)
     })
 
-    test("TST1144 - descrição obrigatória: salvar só com arquivo é bloqueado", async ({ ltcatAnexoModal: m, page }) => {
+    test("TST1144 - descrição obrigatória: salvar só com arquivo é bloqueado", async ({ ltcatAnexoModal: m, toast, page }) => {
       await m.anexar(arquivo("minimo.pdf"))
       await m.botaoSalvar.click()
-      await expect(page.locator("apls-toast").filter({ hasText: /campos obrigatórios/ })).toBeVisible()
+      await toast.temTexto(/campos obrigatórios/)
       await expect(m.titulo).toBeVisible()
       await expect(page.getByText("Registro incluído com sucesso")).toHaveCount(0)
     })
@@ -192,16 +193,16 @@ test.describe("LTCAT - Anexos", () => {
   })
 
   // Texto real: "Permitido somente arquivos com até 5MB e com extensão .jpg, .jpeg, .png, .doc, .docx ou .pdf. Favor verificar."
-  const mensagemArquivoInvalido = async (a: LtcatAnexosPage, m: LtcatAnexoModal, page: Page) => {
+  const mensagemArquivoInvalido = async (a: LtcatAnexosPage, m: LtcatAnexoModal, toast: ToastPage) => {
     await a.abrirModalAdicionar()
     await m.anexar(arquivo("teste_anexo_5_1MiB.pdf"))
-    const toast = page.locator("apls-toast").filter({ hasText: /Permitido somente arquivos/ })
-    await expect(toast).toBeVisible()
-    return (await toast.innerText()).replace(/\s+/g, " ")
+    const aviso = toast.mensagem.filter({ hasText: /Permitido somente arquivos/ })
+    await expect(aviso).toBeVisible()
+    return (await aviso.innerText()).replace(/\s+/g, " ")
   }
 
-  test("TST1138/TST1139 - [arquivo_invalido] segue a regra da aba (5MB e extensões do campo)", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-    const texto = await mensagemArquivoInvalido(a, m, page)
+  test("TST1138/TST1139 - [arquivo_invalido] segue a regra da aba (5MB e extensões do campo)", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, toast }) => {
+    const texto = await mensagemArquivoInvalido(a, m, toast)
     expect(texto).toContain("Atenção")
     expect(texto).toContain("Permitido somente arquivos com até 5MB e com extensão .jpg, .jpeg, .png, .doc, .docx ou .pdf. Favor verificar.")
   })
@@ -209,9 +210,9 @@ test.describe("LTCAT - Anexos", () => {
   // DIVERGÊNCIA EF: o catálogo de mensagens da EF define [arquivo_invalido] como "...até 30MB e com extensão JPEG, JPG,
   // PNG, DOC, DOCX, XLS, XLSX e PDF. Favor verificar." (texto genérico de outras telas); a tela exibe 5MB e sem XLS/XLSX.
   // Remover o test.fail se confirmarem que o texto da aba Anexos é o correto.
-  test("TST1138/TST1139 - [arquivo_invalido] com o texto do catálogo da EF", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
+  test("TST1138/TST1139 - [arquivo_invalido] com o texto do catálogo da EF", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, toast }) => {
     test.fail(true, "a tela exibe 5MB e extensões da aba; o catálogo da EF diz 30MB e inclui XLS/XLSX")
-    const texto = await mensagemArquivoInvalido(a, m, page)
+    const texto = await mensagemArquivoInvalido(a, m, toast)
     expect(texto).toContain("Permitido somente arquivos com até 30MB e com extensão JPEG, JPG, PNG, DOC, DOCX, XLS, XLSX e PDF. Favor verificar.")
   })
 
@@ -248,18 +249,18 @@ test.describe("LTCAT - Anexos", () => {
     ["docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
   ]
   for (const [ext, mimeType] of formatos) {
-    test(`TST1164 (extensão dupla) - relatorio.v2.${ext} é bloqueado com aviso laranja temporizado`, async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
+    test(`TST1164 (extensão dupla) - relatorio.v2.${ext} é bloqueado com aviso laranja temporizado`, async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, toast }) => {
       await a.abrirModalAdicionar()
       await m.inputArquivo.setInputFiles({ name: `relatorio.v2.${ext}`, mimeType, buffer: Buffer.from("conteudo de teste") })
 
-      const toast = page.locator("apls-toast").filter({ hasText: /extensão dupla/ })
-      await expect(toast).toBeVisible()
-      const texto = (await toast.innerText()).replace(/\s+/g, " ")
+      const aviso = toast.mensagem.filter({ hasText: /extensão dupla/ })
+      await expect(aviso).toBeVisible()
+      const texto = (await aviso.innerText()).replace(/\s+/g, " ")
       expect(texto).toContain("Atenção")
       expect(texto).toContain("Não é permitido carregar arquivos com extensão dupla. Favor remover todos os pontos do nome do arquivo.")
 
       // laranja: o fundo fica num elemento acima do apls-toast
-      const fundo = await toast.evaluate((el) => {
+      const fundo = await aviso.evaluate((el) => {
         for (let e: Element | null = el; e; e = e.parentElement) {
           const c = getComputedStyle(e).backgroundColor
           if (c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c
@@ -273,7 +274,7 @@ test.describe("LTCAT - Anexos", () => {
       await expect(m.areaDeArquivo).toBeVisible()
       await expect(m.campoArquivo).not.toContainText("relatorio")
       // temporizada: some sozinha
-      await expect(toast).toHaveCount(0, { timeout: 30000 })
+      await expect(aviso).toHaveCount(0, { timeout: 30000 })
     })
   }
 })

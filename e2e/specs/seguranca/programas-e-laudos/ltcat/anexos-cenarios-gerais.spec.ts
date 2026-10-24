@@ -34,7 +34,7 @@ test.describe("LTCAT - Anexos - cenários gerais", () => {
   })
 
   test("TST1228 - editar o anexo e não salvar não altera os dados", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-    await incluirAnexo(page, a, m, "Original")
+    await incluirAnexo(a, m, "Original")
     await abrirEdicaoAnexo(a, m)
     await m.descricao.fill("Alteração descartada")
     await m.botaoFechar.click()
@@ -94,7 +94,7 @@ test.describe("LTCAT - Anexos - cenários gerais", () => {
   })
 
   test("TST1233 - baixa o arquivo e, ao excluir, a linha e o ícone de download saem do grid", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-    await incluirAnexo(page, a, m, "Excluído")
+    await incluirAnexo(a, m, "Excluído")
     // antes de excluir o download funciona
     const [download] = await Promise.all([
       page.waitForEvent("download"),
@@ -110,7 +110,7 @@ test.describe("LTCAT - Anexos - cenários gerais", () => {
   })
 
   test("TST1234 - alterar o arquivo e cancelar mantém o arquivo anterior", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-    await incluirAnexo(page, a, m, "Mantém arquivo")
+    await incluirAnexo(a, m, "Mantém arquivo")
     await abrirEdicaoAnexo(a, m)
     await m.botaoLimparArquivo.click()
     await page.getByRole("button", { name: "Excluir" }).click()
@@ -123,8 +123,8 @@ test.describe("LTCAT - Anexos - cenários gerais", () => {
 
   test("TST1235 - dois uploads com o mesmo nome de arquivo ficam como itens distintos", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
     test.setTimeout(120000)
-    await incluirAnexo(page, a, m, "Primeiro")
-    await incluirAnexo(page, a, m, "Segundo")
+    await incluirAnexo(a, m, "Primeiro")
+    await incluirAnexo(a, m, "Segundo")
     expect(await a.descricoes()).toEqual(["Primeiro", "Segundo"])
     // o servidor acrescenta sufixo aleatório, então os nomes exibidos não colidem
     const arquivos = await a.linhasAnexo.locator("td.cdk-column-anexo span").allInnerTexts()

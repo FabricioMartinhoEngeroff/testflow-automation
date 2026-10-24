@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 
 // modal "Histórico de revisões" (botão "Revisões" do cabeçalho do cadastro)
 export class LtcatHistoricoRevisoesModal {
@@ -101,13 +101,13 @@ export class LtcatHistoricoRevisoesModal {
 
   // Descoberta: estes campos de data têm máscara; fill("01/01/2020") vira "01/12/0206".
   // Digitar só os dígitos funciona.
-  async digitarData(campo: ReturnType<Page["getByRole"]>, ddmmaaaa: string) {
+  async digitarData(campo: Locator, ddmmaaaa: string) {
     await campo.click()
     await campo.pressSequentially(ddmmaaaa.replace(/\D/g, ""))
   }
 
   // "Data da revisão" já vem com hoje; digitar por cima sem limpar embaralha a máscara
-  async substituirData(campo: ReturnType<Page["getByRole"]>, ddmmaaaa: string) {
+  async substituirData(campo: Locator, ddmmaaaa: string) {
     await campo.click()
     await campo.press("Control+A")
     await campo.press("Backspace")
@@ -115,7 +115,7 @@ export class LtcatHistoricoRevisoesModal {
     await campo.press("Tab")
   }
 
-  async escolherResponsavel(trecho: string | RegExp = /031\.044\.320-23/) {
+  async escolherResponsavel(trecho: string | RegExp = /211\.576\.325-48/) {
     await this.responsavelTecnico.click()
     await this.page.getByRole("option", { name: trecho }).first().click()
   }

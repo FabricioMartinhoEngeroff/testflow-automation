@@ -39,3 +39,8 @@ export function senhaUsuariosQa() {
 //     senha: obrigatoria("PGR_SENHA_PERFIL"),
 //   }
 // }
+
+// senha do certificado digital que assina os laudos (PGR e LTCAT); lida só quando pedida
+export function senhaAssinatura() {
+  return obrigatoria("PGR_SENHA_ASSINATURA")
+}

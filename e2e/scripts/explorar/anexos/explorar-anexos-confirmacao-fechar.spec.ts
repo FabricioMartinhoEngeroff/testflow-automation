@@ -38,7 +38,7 @@ test("confirmação ao fechar", async ({ login, ltcatCadastroPage: c, ltcatAnexo
   await fechar("inclusão com arquivo e descrição")
 
   // edição
-  await incluirAnexo(page, a, m, "Para editar")
+  await incluirAnexo(a, m, "Para editar")
   await expectEdit(a, m, page)
   await fechar("edição sem alterar nada")
 

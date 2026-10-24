@@ -48,6 +48,16 @@ const ltcatDoAno = (ano: number, unidade?: string): DadosLtcat => ({
   condicoesOperacionais: `Registro do teste de permissão ${ano}`,
 })
 
+// browser.newContext não herda o "use" do config
+const novoContexto = (browser: Browser, usuario: Usuario) =>
+  browser.newContext({ baseURL: env.baseUrl, locale: "pt-BR", storageState: sessao(usuario) })
+
+const pesquisarCuritiba = async (ltcatPage: LtcatPage) => {
+  await ltcatPage.abrir()
+  await ltcatPage.filtrarPorRegiao(H1)
+  await ltcatPage.pesquisar()
+}
+
 async function pesquisarAno(ltcatPage: LtcatPage, ano: number) {
   await ltcatPage.abrir()
   await ltcatPage.filtrarPorRegiao(H1)
@@ -64,9 +74,9 @@ async function criar(cadastro: LtcatCadastroPage, dados: DadosLtcat) {
 }
 
 // preparar e limpar com o QAutomatizador_todas_h1, em contexto próprio: o usuário do teste
-// pode não ter Incluir nem Excluir. browser.newContext não herda o "use" do config.
+// pode não ter Incluir nem Excluir
 async function comoTodas(browser: Browser, acao: (ltcatPage: LtcatPage, cadastro: LtcatCadastroPage) => Promise<void>) {
-  const context = await browser.newContext({ baseURL: env.baseUrl, locale: "pt-BR", storageState: sessao("QAutomatizador_todas_h1") })
+  const context = await novoContexto(browser, "QAutomatizador_todas_h1")
   const page = await context.newPage()
   try {
     await acao(new LtcatPage(page), new LtcatCadastroPage(page))
@@ -99,14 +109,14 @@ test.describe("LTCAT - Permissões (E2E)", () => {
   test.describe("sem permissão no LTCAT (Ex. 1)", () => {
     test.use({ storageState: sessao("QAutomatizador_sem_permissao") })
 
-    test("acesso pela URL mostra [sem_permissao] e redireciona para o Meu Apollus", async ({ page, toast }) => {
+    test("TST002 - acesso pela URL mostra [sem_permissao] e redireciona para o Meu Apollus", async ({ page, toast }) => {
       await page.goto(URLS.ltcat)
       await toast.temTexto(MSG_SEM_PERMISSAO)
       // o Meu Apollus é a home com o dashboard na query (/apollus/?data={"dashboard":...})
       await expect(page).toHaveURL(/\/apollus\/\?data=.*dashboard/)
     })
 
-    test("item LTCAT não aparece no menu lateral", async ({ page, menuLateral }) => {
+    test("TST001 - item LTCAT não aparece no menu lateral", async ({ page, menuLateral }) => {
       await page.goto("/apollus/")
       await menuLateral.abrirModulo("seguranca")
       // o perfil tem Gestão de Ocorrências: garante que o painel de Segurança abriu
@@ -120,7 +130,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
     test.describe(`${usuario} no menu lateral`, () => {
       test.use({ storageState: sessao(usuario) })
 
-      test("item LTCAT aparece em Programas e Laudos, com o nome certo, e abre a pesquisa", async ({ page, menuLateral, ltcatPage }) => {
+      test("TST008 - item LTCAT aparece em Programas e Laudos, com o nome certo, e abre a pesquisa", async ({ page, menuLateral, ltcatPage }) => {
         await page.goto("/apollus/")
         await menuLateral.abrirModulo("seguranca")
         if (!(await menuLateral.item(/LTCAT/).isVisible())) await menuLateral.grupo("Programas e Laudos").click()
@@ -136,14 +146,10 @@ test.describe("LTCAT - Permissões (E2E)", () => {
     test.describe(`${usuario} (${permissoes.join("+")} em Curitiba)`, () => {
       test.use({ storageState: sessao(usuario) })
 
-      test.beforeEach(async ({ ltcatPage }) => {
-        await ltcatPage.abrir()
-        await ltcatPage.filtrarPorRegiao(H1)
-        await ltcatPage.pesquisar()
-      })
+      test.beforeEach(async ({ ltcatPage }) => pesquisarCuritiba(ltcatPage))
 
       // "Atalho/filtros" da matriz: toda permissão vê e usa os filtros e botões da pesquisa
-      test("tela carrega sem erro, com filtros e botões, e a pesquisa traz LTCATs", async ({ ltcatPage, page }) => {
+      test("TST011 (pesquisa) - tela carrega sem erro, com filtros e botões, e a pesquisa traz LTCATs", async ({ ltcatPage, page }) => {
         await expect(ltcatPage.titulo).toBeVisible()
         await expect(page.locator("apls-toast")).toHaveCount(0)
         for (const campo of [ltcatPage.regiao, ltcatPage.unidade, ltcatPage.setor, ltcatPage.ano]) await expect(campo).toBeVisible()
@@ -152,21 +158,21 @@ test.describe("LTCAT - Permissões (E2E)", () => {
         expect(await ltcatPage.totalDeRegistros()).toBeGreaterThan(0)
       })
 
-      test("Região (H1) oferece só Curitiba", async ({ ltcatPage, page }) => {
+      test("TST040 - Região (H1) oferece só Curitiba", async ({ ltcatPage, page }) => {
         await ltcatPage.regiao.fill("")
         const opcoes = (await ltcatPage.opcoesDe(ltcatPage.regiao)).map((o) => o.trim())
         await page.keyboard.press("Escape")
         expect(opcoes).toEqual([H1])
       })
 
-      test(`botão Novo ${libera("Novo", permissoes) ? "aparece e abre o cadastro" : "não aparece"}`, async ({ ltcatPage, ltcatCadastroPage: cadastro }) => {
+      test(`TST009/TST010 - botão Novo ${libera("Novo", permissoes) ? "aparece e abre o cadastro" : "não aparece"}`, async ({ ltcatPage, ltcatCadastroPage: cadastro }) => {
         if (!libera("Novo", permissoes)) return await expect(ltcatPage.botaoNovo).toBeHidden()
         await ltcatPage.botaoNovo.click()
         await expect(cadastro.titulo).toBeVisible()
       })
 
       if (libera("Visualizar", permissoes)) {
-        test("Visualizar do menu da linha abre o LTCAT", async ({ ltcatPage, ltcatCadastroPage: cadastro, page }) => {
+        test("TST004 - Visualizar do menu da linha abre o LTCAT", async ({ ltcatPage, ltcatCadastroPage: cadastro, page }) => {
           await ltcatPage.abrirMenuDaLinha()
           await ltcatPage.itemDoMenu("Visualizar").click()
           await expect(cadastro.titulo).toBeVisible()
@@ -174,7 +180,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
         })
       }
 
-      test("menu da linha segue a matriz", async ({ ltcatPage }) => {
+      test("TST003/TST004/TST005/TST006/TST007 - menu da linha segue a matriz", async ({ ltcatPage }) => {
         await ltcatPage.abrirMenuDaLinha()
         await expect(ltcatPage.menuDaLinha.first()).toBeVisible()
         const itens = (await ltcatPage.menuDaLinha.allInnerTexts()).join(" | ")
@@ -183,7 +189,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
         }
       })
 
-      test("duplo clique abre o registro só com ALT ou VIS; editar só com ALT", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
+      test("TST004/TST005 - duplo clique abre o registro só com ALT ou VIS; editar só com ALT", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
         await ltcatPage.linhas.first().dblclick()
         if (!libera("Visualizar", permissoes)) {
           await expect(ltcatPage.titulo).toBeVisible()
@@ -213,9 +219,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
 
     test.beforeAll(async ({ browser }) => {
       await comoTodas(browser, async (ltcatPage, cadastro) => {
-        await ltcatPage.abrir()
-        await ltcatPage.filtrarPorRegiao(H1)
-        await ltcatPage.pesquisar()
+        await pesquisarCuritiba(ltcatPage)
         await ltcatPage.linhas.first().dblclick()
         await expect(cadastro.titulo).toBeVisible()
         idkey = ltcatPage.urlAtual().match(/idkey=(\d+)/)?.[1] ?? ""
@@ -226,7 +230,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test.describe(usuario, () => {
         test.use({ storageState: sessao(usuario) })
 
-        test(`cadastro salvo pela URL ${libera("Visualizar", permissoes) ? "abre" : "é bloqueado com [sem_permissao]"}`, async ({ page, ltcatCadastroPage: cadastro, toast }) => {
+        test(`TST003/TST006 (URL) - cadastro salvo pela URL ${libera("Visualizar", permissoes) ? "abre" : "é bloqueado com [sem_permissao]"}`, async ({ page, ltcatCadastroPage: cadastro, toast }) => {
           expect(idkey, "idkey de um LTCAT de Curitiba").not.toBe("")
           await page.goto(`${URLS.ltcatCadastro}?idkey=${idkey}`)
           if (libera("Visualizar", permissoes)) return await expect(cadastro.titulo).toBeVisible()
@@ -234,7 +238,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
           await expect(cadastro.titulo).toBeHidden()
         })
 
-        test(`cadastro novo pela URL ${libera("Novo", permissoes) ? "abre" : "é bloqueado com [sem_permissao]"}`, async ({ page, ltcatCadastroPage: cadastro, toast }) => {
+        test(`TST010 (URL) - cadastro novo pela URL ${libera("Novo", permissoes) ? "abre" : "é bloqueado com [sem_permissao]"}`, async ({ page, ltcatCadastroPage: cadastro, toast }) => {
           await page.goto(URLS.ltcatCadastro)
           if (libera("Novo", permissoes)) return await expect(cadastro.titulo).toBeVisible()
           await toast.temTexto(MSG_SEM_PERMISSAO)
@@ -252,7 +256,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test.use({ storageState: sessao("QAutomatizador_inc_h1") })
       test.afterEach(async ({ browser }) => excluirTodosDoAno(browser, ANO))
 
-      test("cria pelo Novo e, logo após salvar, vê Duplicar e Gerar laudo; depois não abre nem exclui", async ({ ltcatPage, ltcatCadastroPage: cadastro, page }) => {
+      test("TST006 - cria pelo Novo e, logo após salvar, vê Duplicar e Gerar laudo; depois não abre nem exclui", async ({ ltcatPage, ltcatCadastroPage: cadastro, page }) => {
         await ltcatPage.abrir()
         await ltcatPage.botaoNovo.click()
         await expect(cadastro.titulo).toBeVisible()
@@ -285,7 +289,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
         }))
         test.afterEach(async ({ browser }) => excluirTodosDoAno(browser, ano))
 
-        test("abre o registro, altera e salva; não tem Duplicar", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+        test("TST005 - abre o registro, altera e salva; não tem Duplicar", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
           expect(await pesquisarAno(ltcatPage, ano), `ano ${ano} no filtro`).toBe(true)
           await ltcatPage.linhas.first().dblclick()
           await expect(cadastro.titulo).toBeVisible()
@@ -309,7 +313,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       }))
       test.afterEach(async ({ browser }) => excluirTodosDoAno(browser, ANO))
 
-      test("abre o registro só para leitura, com Gerar laudo e sem Salvar nem Duplicar", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
+      test("TST004 - abre o registro só para leitura, com Gerar laudo e sem Salvar nem Duplicar", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
         expect(await pesquisarAno(ltcatPage, ANO), `ano ${ANO} no filtro`).toBe(true)
         await ltcatPage.linhas.first().dblclick()
         await expect(cadastro.titulo).toBeVisible()
@@ -334,7 +338,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
         }))
         test.afterEach(async ({ browser }) => excluirTodosDoAno(browser, ano))
 
-        test("fechar o modal não remove; Excluir remove o registro pela pesquisa", async ({ ltcatPage, toast }) => {
+        test("TST003 - fechar o modal não remove; Excluir remove o registro pela pesquisa", async ({ ltcatPage, toast }) => {
           expect(await pesquisarAno(ltcatPage, ano), `ano ${ano} no filtro`).toBe(true)
           await ltcatPage.abrirMenuDaLinha()
           await ltcatPage.itemDoMenu("Excluir").click()
@@ -357,7 +361,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test.use({ storageState: sessao("QAutomatizador_todas_h1") })
       test.afterEach(async ({ browser }) => excluirTodosDoAno(browser, ANO))
 
-      test("ciclo completo: cria pelo Novo, abre pela pesquisa, altera, salva e exclui", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast }) => {
+      test("TST007 - ciclo completo: cria pelo Novo, abre pela pesquisa, altera, salva e exclui", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast }) => {
         await ltcatPage.abrir()
         await ltcatPage.botaoNovo.click()
         await criar(cadastro, ltcatDoAno(ANO))
@@ -387,16 +391,16 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test.describe(usuario, () => {
         test.use({ storageState: sessao(usuario) })
 
-        test("a Região já vem preenchida com Curitiba (única unidade com permissão)", async ({ ltcatPage }) => {
+        test("TST040 - a Região já vem preenchida com Curitiba (única unidade com permissão)", async ({ ltcatPage }) => {
           await ltcatPage.abrir()
           await expect(ltcatPage.regiao).toHaveValue(H1)
         })
       })
     }
 
-    test("dois usuários ao mesmo tempo veem só as Unidades da própria permissão", async ({ browser }) => {
+    test("TST056 - dois usuários ao mesmo tempo veem só as Unidades da própria permissão", async ({ browser }) => {
       const abrir = async (usuario: Usuario) => {
-        const context = await browser.newContext({ baseURL: env.baseUrl, locale: "pt-BR", storageState: sessao(usuario) })
+        const context = await novoContexto(browser, usuario)
         const ltcatPage = new LtcatPage(await context.newPage())
         await ltcatPage.abrir()
         await ltcatPage.filtrarPorRegiao(H1)
@@ -417,7 +421,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
     test.describe("troca de usuário no mesmo navegador", () => {
       test.use({ storageState: { cookies: [], origins: [] } })
 
-      test("o filtro de um usuário não aparece para o próximo", async ({ login, ltcatPage, page }) => {
+      test("TST056 (troca de usuário) - o filtro de um usuário não aparece para o próximo", async ({ login, ltcatPage, page }) => {
         const ano = String(new Date().getFullYear())
         await login.entrar({ usuario: "QAutomatizador_vis_h1", senha: senhaUsuariosQa() })
         await ltcatPage.abrir()
@@ -425,18 +429,17 @@ test.describe("LTCAT - Permissões (E2E)", () => {
         await ltcatPage.selecionarOpcao(ltcatPage.ano, ano)
         await ltcatPage.pesquisar()
 
-        await page.locator("apls-navegador-superior apls-icon[icon='logout']").click()
-        await page.waitForURL(/\/login/)
+        await login.sair()
         await login.entrar({ usuario: "QAutomatizador_alt_h1", senha: senhaUsuariosQa() })
         await ltcatPage.abrir()
         expect(await ltcatPage.anoSelecionado(), "o Ano escolhido pelo outro usuário").toBe("")
       })
     })
 
-    test.fixme("usuário com permissão em várias H2 da mesma H1 vê todas elas na Unidade", async () => {
+    test.fixme("TST060 - usuário com permissão em várias H2 da mesma H1 vê todas elas na Unidade", async () => {
       // falta um usuário com 2+ unidades de Curitiba (ex.: Fábrica Curitiba e ADM Curitiba)
     })
-    test.fixme("perder a permissão de uma H2 durante a sessão tira o acesso depois de recarregar/novo login", async () => {
+    test.fixme("TST088 - perder a permissão de uma H2 durante a sessão tira o acesso depois de recarregar/novo login", async () => {
       // exige alterar o perfil durante o teste; os testes de permissão usam perfis fixos
     })
   })
@@ -450,10 +453,8 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test.describe(usuario, () => {
         test.use({ storageState: sessao(usuario) })
 
-        test("vê LTCATs de Curitiba com e sem unidade", async ({ ltcatPage }) => {
-          await ltcatPage.abrir()
-          await ltcatPage.filtrarPorRegiao(H1)
-          await ltcatPage.pesquisar()
+        test("TST039 - vê LTCATs de Curitiba com e sem unidade", async ({ ltcatPage }) => {
+          await pesquisarCuritiba(ltcatPage)
           const unidades = await ltcatPage.celulasDeTodasAsPaginas("unidade")
           expect(unidades.some((u) => !u.trim()), "algum LTCAT sem unidade").toBe(true)
           expect(unidades.some((u) => u.trim() && !H2.test(u)), "algum LTCAT de outra unidade").toBe(true)
@@ -465,7 +466,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test.describe(usuario, () => {
         test.use({ storageState: sessao(usuario) })
 
-        test("Unidade (H2) oferece só a Fábrica Curitiba", async ({ ltcatPage, page }) => {
+        test("TST062 - Unidade (H2) oferece só a Fábrica Curitiba", async ({ ltcatPage, page }) => {
           await ltcatPage.abrir()
           await ltcatPage.filtrarPorRegiao(H1)
           const opcoes = await ltcatPage.opcoesDe(ltcatPage.unidade)
@@ -474,10 +475,8 @@ test.describe("LTCAT - Permissões (E2E)", () => {
           for (const o of opcoes) expect(o).toMatch(H2)
         })
 
-        test("vê só LTCATs da Fábrica Curitiba", async ({ ltcatPage }) => {
-          await ltcatPage.abrir()
-          await ltcatPage.filtrarPorRegiao(H1)
-          await ltcatPage.pesquisar()
+        test("TST062 (pesquisa) - vê só LTCATs da Fábrica Curitiba", async ({ ltcatPage }) => {
+          await pesquisarCuritiba(ltcatPage)
           const unidades = await ltcatPage.celulasDeTodasAsPaginas("unidade")
           expect(unidades.length).toBeGreaterThan(0)
           for (const u of unidades) expect(u).toMatch(H2)
@@ -493,7 +492,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test.use({ storageState: sessao("QAutomatizador_multiperfil") })
 
       for (const [regiao, excluiAqui] of [[H1, false], [OUTRA_H1, true]] as const) {
-        test(`em ${regiao} o menu ${excluiAqui ? "tem" : "não tem"} Excluir`, async ({ ltcatPage }) => {
+        test(`TST041 - em ${regiao} o menu ${excluiAqui ? "tem" : "não tem"} Excluir`, async ({ ltcatPage }) => {
           await ltcatPage.abrir()
           await expect(ltcatPage.botaoNovo).toBeVisible()
           await ltcatPage.filtrarPorRegiao(regiao)
@@ -508,10 +507,8 @@ test.describe("LTCAT - Permissões (E2E)", () => {
     test.describe("QAutomatizador_H1_H2 (Ex. 7)", () => {
       test.use({ storageState: sessao("QAutomatizador_H1_H2") })
 
-      test("em Curitiba vê e exclui só LTCATs da Fábrica Curitiba", async ({ ltcatPage }) => {
-        await ltcatPage.abrir()
-        await ltcatPage.filtrarPorRegiao(H1)
-        await ltcatPage.pesquisar()
+      test("TST062 (excluir) - em Curitiba vê e exclui só LTCATs da Fábrica Curitiba", async ({ ltcatPage }) => {
+        await pesquisarCuritiba(ltcatPage)
         for (const u of await ltcatPage.celulasDeTodasAsPaginas("unidade")) expect(u).toMatch(H2)
         await ltcatPage.abrirMenuDaLinha()
         await expect(ltcatPage.itemDoMenu("Excluir")).toBeVisible()
@@ -521,27 +518,58 @@ test.describe("LTCAT - Permissões (E2E)", () => {
     test.describe("QAutomatizador_multiunidade (Ex. 8)", () => {
       test.use({ storageState: sessao("QAutomatizador_multiunidade") })
 
-      test("LTCAT de Curitiba (só VIS) abre com os campos bloqueados", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
-        await ltcatPage.abrir()
-        await ltcatPage.filtrarPorRegiao(H1)
-        await ltcatPage.pesquisar()
+      test("TST004 (multiunidade) - LTCAT de Curitiba (só VIS) abre com os campos bloqueados", async ({ ltcatPage, ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
+        await pesquisarCuritiba(ltcatPage)
         await ltcatPage.linhas.first().dblclick()
         await expect(cadastro.titulo).toBeVisible()
         await expect(r.condicoesOperacionais).not.toBeEditable()
         await expect(cadastro.botaoVoltar).toBeEnabled()
       })
 
-      test.fixme("com ALT em duas H1, a Região só oferece essas duas", async () => {
+      test.fixme("TST041 (ALT) - com ALT em duas H1, a Região só oferece essas duas", async () => {
         // falta mapear a TERCEIRA_H1
       })
     })
   })
 
+  // TST1405 comentado: permissão já é coberta por outra suíte de permissões
+  // // EF: "Dados da assinatura e download: INC*, ALT, VIS". Precisa de um LTCAT de Curitiba assinado (ver tela-cadastro-botoes.spec.ts)
+  // test.describe("Dados da assinatura digital", () => {
+  //   const idkey = process.env.LTCAT_ASSINADO_IDKEY
+  //   test.skip(!idkey, "defina LTCAT_ASSINADO_IDKEY com um LTCAT de Curitiba assinado digitalmente")
+
+  //   for (const usuario of ["QAutomatizador_vis_h1", "QAutomatizador_alt_h1"] as const) {
+  //     test.describe(usuario, () => {
+  //       test.use({ storageState: sessao(usuario) })
+
+  //       test("TST1405 - vê o botão e abre os dados da assinatura", async ({ page, ltcatCadastroPage: cadastro, ltcatDadosAssinaturaModal: m }) => {
+  //         await page.goto(`${URLS.ltcatCadastro}?idkey=${idkey}`)
+  //         await expect(cadastro.botaoDadosAssinatura).toBeVisible()
+  //         await cadastro.botaoDadosAssinatura.click()
+  //         await expect(m.titulo).toBeVisible()
+  //         await expect(m.botaoDownload).toBeVisible()
+  //       })
+  //     })
+  //   }
+
+  //   for (const usuario of ["QAutomatizador_inc_h1", "QAutomatizador_exc_h1"] as const) {
+  //     test.describe(usuario, () => {
+  //       test.use({ storageState: sessao(usuario) })
+
+  //       test("TST1405 - sem VIS/ALT não abre o LTCAT assinado, então não chega ao botão", async ({ page, ltcatCadastroPage: cadastro, toast }) => {
+  //         await page.goto(`${URLS.ltcatCadastro}?idkey=${idkey}`)
+  //         await toast.temTexto(MSG_SEM_PERMISSAO)
+  //         await expect(cadastro.botaoDadosAssinatura).toBeHidden()
+  //       })
+  //     })
+  //   }
+  // })
+
   test.describe("pendências", () => {
-    test.fixme("Assinatura digital (Assinar: INC*, ALT; Dados da assinatura e download: INC*, ALT, VIS)", async () => {
+    test.fixme("SEM-ID - Assinatura digital (Assinar: INC*, ALT; Dados da assinatura e download: INC*, ALT, VIS)", async () => {
       // fica para a suíte de assinatura
     })
-    test.fixme("Configurações gerais: ALT e VIS", async () => {
+    test.fixme("SEM-ID - Configurações gerais: ALT e VIS", async () => {
       // a EF não diz o que cada uma muda na tela
     })
   })

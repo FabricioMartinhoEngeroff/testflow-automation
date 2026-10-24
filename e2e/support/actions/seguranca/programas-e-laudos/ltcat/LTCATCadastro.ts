@@ -69,6 +69,28 @@ export class LtcatCadastroPage {
     return this.page.getByRole("button", { name: "Duplicar", exact: true })
   }
 
+  // apls-popup > .apls-popup-header / .apls-popup-content / .apls-popup-actions (Não = secondary, Sim = primary com foco)
+  get confirmacaoDuplicar() {
+    return this.page.locator("apls-popup").filter({ hasText: "duplicando os dados" })
+  }
+
+  get textoConfirmacaoDuplicar() {
+    return this.confirmacaoDuplicar.locator(".apls-popup-content")
+  }
+
+  botaoConfirmacaoDuplicar(nome: "Sim" | "Não") {
+    return this.confirmacaoDuplicar.locator(".apls-popup-actions").getByRole("button", { name: nome, exact: true })
+  }
+
+  // Voltar com alteração pendente (Sair sem salvar = secondary, Salvar e sair = primary com foco)
+  get confirmacaoSaida() {
+    return this.page.locator("apls-popup").filter({ hasText: "Deseja salvá-las antes de sair?" })
+  }
+
+  botaoConfirmacaoSaida(nome: "Sair sem salvar" | "Salvar e sair") {
+    return this.confirmacaoSaida.locator(".apls-popup-actions").getByRole("button", { name: nome, exact: true })
+  }
+
   // LTCAT já assinado: ver os dados da assinatura e gerar o laudo assinado
   get botaoDadosAssinatura() {
     return this.page.getByRole("button", { name: /^Dados da assinatura digital/ })
@@ -87,8 +109,9 @@ export class LtcatCadastroPage {
     return this.page.getByRole("tab", { name: nome })
   }
 
-  async abrir() {
-    await this.page.goto(URLS.ltcatCadastro)
+  // sem idkey abre um LTCAT novo
+  async abrir(idkey?: string | number) {
+    await this.page.goto(idkey ? `${URLS.ltcatCadastro}?idkey=${idkey}` : URLS.ltcatCadastro)
     await this.titulo.waitFor({ state: "visible" })
   }
 

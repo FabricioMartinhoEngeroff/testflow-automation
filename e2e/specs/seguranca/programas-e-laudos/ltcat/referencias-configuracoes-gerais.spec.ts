@@ -3,8 +3,10 @@
 // vem selecionado sozinho; a regra "uma única opção vem selecionada" precisa de uma Região com 1 modelo.
 import type { Locator, Page } from "@playwright/test"
 import { test, expect } from "@support"
+import type { LtcatCadastroPage } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro"
 import type { OpcaoReferencias } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATReferencias"
 import { ltcatValido } from "@support/data/ltcat"
+import { cliquesRapidos } from "@support/utils/cliques"
 
 const MODELO = "1233 - joao"
 const OUTRO_MODELO = "00001 - ATA edição"
@@ -61,20 +63,20 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
   })
 
   test.describe("Seção", () => {
-    test("01 - todos os componentes visíveis", async ({ ltcatReferenciasPage: r }) => {
+    test("TST885/TST886 - todos os componentes visíveis", async ({ ltcatReferenciasPage: r }) => {
       await expect(r.modeloDocumento).toBeVisible()
       await expect(r.vigenciaInicio).toBeVisible()
       await expect(r.vigenciaFim).toBeVisible()
       for (const opcao of [...SEMPRE_HABILITADAS, HISTORICO]) await expect(r.opcao(opcao)).toBeVisible()
     })
 
-    test("02 - componentes na ordem da documentação", async ({ page }) => {
+    test("TST887 - componentes na ordem da documentação", async ({ page }) => {
       const secao = page.locator("apollus-ngx-ivy-ltcat-aba-referencia .col-6").nth(1)
       const textos = await secao.locator("mat-label, .mat-checkbox-label").allInnerTexts()
       expect(textos.map((t) => t.replace("help_outline", "").replace("*", "").trim())).toEqual(ORDEM_EF)
     })
 
-    test("03 - em resolução reduzida continua utilizável e sem rolagem horizontal", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST888 - em resolução reduzida continua utilizável e sem rolagem horizontal", async ({ ltcatReferenciasPage: r, page }) => {
       await page.setViewportSize({ width: 768, height: 900 })
       await expect(r.modeloDocumento).toBeVisible()
       await expect(r.vigenciaInicio).toBeVisible()
@@ -83,24 +85,22 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     })
 
-    test("04 - Modelo e Vigência alinhados com a mesma largura, checkboxes alinhados entre si", async ({ ltcatReferenciasPage: r }) => {
+    test("TST937 - Modelo e Vigência alinhados com a mesma largura, checkboxes alinhados entre si", async ({ ltcatReferenciasPage: r }) => {
       // compara a caixa visível: na Vigência o padding da coluna fica dentro do mat-form-field
       const modelo = (await r.campoModeloDocumento.locator(".mat-form-field-flex").boundingBox())!
       const vigencia = (await r.campoVigencia.locator(".mat-form-field-flex").boundingBox())!
       expect(vigencia.x).toBe(modelo.x)
       expect(vigencia.width).toBe(modelo.width)
 
-      const xs = []
-      for (const opcao of [...SEMPRE_HABILITADAS, HISTORICO]) {
-        xs.push((await r.opcao(opcao).locator(".mat-checkbox-inner-container").boundingBox())!.x)
-      }
+      const xs = await Promise.all([...SEMPRE_HABILITADAS, HISTORICO].map(async (opcao) =>
+        (await r.opcao(opcao).locator(".mat-checkbox-inner-container").boundingBox())!.x))
       expect(new Set(xs).size).toBe(1)
     })
   })
 
   test.describe("Modelo de documento", () => {
     // EF abrangência: sem Região só entram os modelos com "Modelo corporativo" marcado
-    test("05 - habilitado, vazio e só com modelos corporativos enquanto não há Região", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test("TST889/TST891 - habilitado, vazio e só com modelos corporativos enquanto não há Região", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       await expect(r.modeloDocumento).toBeEnabled()
       await expect(r.modeloDocumento).toHaveValue("")
       await r.modeloDocumento.click()
@@ -115,7 +115,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       for (const corporativo of semRegiao) expect(comRegiao).toContain(corporativo)
     })
 
-    test("06 - com várias opções no catálogo, nenhuma vem selecionada ao escolher a Região", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test("TST894 (várias opções) - com várias opções no catálogo, nenhuma vem selecionada ao escolher a Região", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
       await expect(r.modeloDocumento).toHaveValue("")
       await r.modeloDocumento.click()
@@ -123,7 +123,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await page.keyboard.press("Escape")
     })
 
-    test("06b - catálogo de Curitiba sem repetir modelo, com e sem Unidade", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test("TST891 (sem repetir) - catálogo de Curitiba sem repetir modelo, com e sem Unidade", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       const opcoes = async () => {
         await r.modeloDocumento.click()
         const lista = await opcoesEstaveis(page)
@@ -141,34 +141,34 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     // QA-AUT-57265 (não mexer): LTCAT, não corporativo, abrangência 70/7003 e 71/711005
     test.describe("abrangência (modelo QA-AUT-57265)", () => {
       const modeloAbrangencia = (opcoes: string[]) => opcoes.some((o) => o.startsWith(MODELO_ABRANGENCIA))
-      const listaCom = async (page: Page, r: { modeloDocumento: import("@playwright/test").Locator }) => {
+      const listaCom = async (page: Page, r: { modeloDocumento: Locator }) => {
         await r.modeloDocumento.click()
         const lista = await opcoesEstaveis(page)
         await page.keyboard.press("Escape")
         return lista
       }
 
-      test("06c - Argentina com a Unidade 7003 traz o modelo", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+      test("TST891 - Argentina com a Unidade 7003 traz o modelo", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
         await cadastro.selecionarOpcao(cadastro.regiao, /70 - /)
         await cadastro.selecionarOpcao(cadastro.unidade, /7003/)
         expect(modeloAbrangencia(await listaCom(page, r))).toBe(true)
       })
 
-      test("06d - Curitiba com a Unidade 711005 traz o modelo", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+      test("TST891 - Curitiba com a Unidade 711005 traz o modelo", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
         await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
         await cadastro.selecionarOpcao(cadastro.unidade, /711005/)
         expect(modeloAbrangencia(await listaCom(page, r))).toBe(true)
       })
 
       // POSSÍVEL BUG: em 2026-10-20 o modelo (abrangência só 711005) aparece em Curitiba com a Unidade 711001. Pela EF (mesma H1 + mesma H2) não deveria listar.
-      test.fail("06e - Curitiba com a Unidade 711001 não traz o modelo da 711005", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+      test.fail("TST891 - Curitiba com a Unidade 711001 não traz o modelo da 711005", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
         await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
         await cadastro.selecionarOpcao(cadastro.unidade, /711001/)
         expect(modeloAbrangencia(await listaCom(page, r))).toBe(false)
       })
     })
 
-    test("07 - opções no formato 'código - descrição' em ordem crescente de código", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test("TST892/TST893 - opções no formato 'código - descrição' em ordem crescente de código", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
       await r.modeloDocumento.click()
       await r.modeloDocumento.selectText()
@@ -183,8 +183,8 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     })
 
     for (const { titulo, termo } of [
-      { titulo: "08 - pesquisa pelo código", termo: "1233" },
-      { titulo: "09 - pesquisa pela descrição", termo: "joa" },
+      { titulo: "TST896 - pesquisa pelo código", termo: "1233" },
+      { titulo: "TST897 - pesquisa pela descrição", termo: "joa" },
     ]) {
       test(titulo, async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
         await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
@@ -199,7 +199,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       })
     }
 
-    test("10 - salvar sem modelo é bloqueado com a mensagem de obrigatório", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast, page }) => {
+    test("TST898 - salvar sem modelo é bloqueado com a mensagem de obrigatório", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast, page }) => {
       await cadastro.preencherObrigatorios()
       await cadastro.preencherConfiguracoesObrigatorias()
       await r.apagarModeloDocumento()
@@ -209,10 +209,10 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(page).not.toHaveURL(/idkey=/)
     })
 
-    // planilha: o destaque vermelho de um obrigatório que ninguém mexeu não pode sumir ao trocar H1 ou H2
+    // planilha (linha sem ID, logo após a TST889): o destaque vermelho de um obrigatório que ninguém mexeu não pode sumir ao trocar H1 ou H2
     for (const { titulo, trocar } of [
-      { titulo: "10b - trocar a Região (H1) mantém o Modelo em vermelho", trocar: (c: import("@support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro").LtcatCadastroPage) => c.selecionarOpcao(c.regiao, /70 - /) },
-      { titulo: "10c - trocar a Unidade (H2) mantém o Modelo em vermelho", trocar: (c: import("@support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro").LtcatCadastroPage) => c.selecionarOpcao(c.unidade, /711001/) },
+      { titulo: "SEM-ID - trocar a Região (H1) mantém o Modelo em vermelho", trocar: (c: LtcatCadastroPage) => c.selecionarOpcao(c.regiao, /70 - /) },
+      { titulo: "SEM-ID - trocar a Unidade (H2) mantém o Modelo em vermelho", trocar: (c: LtcatCadastroPage) => c.selecionarOpcao(c.unidade, /711001/) },
     ]) {
       test(titulo, async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast }) => {
         await cadastro.preencherObrigatorios()
@@ -226,7 +226,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       })
     }
 
-    test("11 - apagar e escolher o modelo de novo mantém a seleção", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
+    test("TST900 (reescolher) - apagar e escolher o modelo de novo mantém a seleção", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
       await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
       // com uma opção só, o sistema pode trazê-la de volta sozinho depois de apagar (regra da EF)
       await r.apagarModeloDocumento()
@@ -234,7 +234,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(r.modeloDocumento).toHaveValue(MODELO)
     })
 
-    test("12 - troca de modelo já selecionado por outro", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
+    test("TST900 - troca de modelo já selecionado por outro", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r }) => {
       await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
       await r.selecionarOpcao(r.modeloDocumento, MODELO)
       await expect(r.modeloDocumento).toHaveValue(MODELO)
@@ -243,7 +243,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     })
 
     // modelos de teste (não mexer), ambos corporativos: MODELO_INATIVO (LTCAT, status inativo) e MODELO_SEM_LTCAT (ativo, sem a flag LTCAT)
-    test("13 - lista só modelos ativos e com a flag LTCAT", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test("TST890 - lista só modelos ativos e com a flag LTCAT", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       await r.modeloDocumento.click()
       const semRegiao = await opcoesEstaveis(page)
       await page.keyboard.press("Escape")
@@ -260,20 +260,20 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     })
 
     // sempre sobram os modelos corporativos ativos com LTCAT (0teste fa, 1teste fa1), então não há como ficar sem opção
-    test.fixme("14 - sem nenhum modelo compatível, campo fica vazio com mensagem", async () => {})
-    // 15 e 36-38 ficam para a suíte de gerar laudo (o arquivo precisa ser conferido)
-    test.fixme("15 - edição do cadastro do modelo aparece no LTCAT e o laudo gera", async () => {})
-    test.fixme("16 - modelo excluído: campo em branco, obrigatório e laudo gera sem erro", async () => {})
+    test.fixme("TST895 - sem nenhum modelo compatível, campo fica vazio com mensagem", async () => {})
+    // TST901 e TST927-TST931 ficam para a suíte de gerar laudo (o arquivo precisa ser conferido)
+    test.fixme("TST901 - edição do cadastro do modelo aparece no LTCAT e o laudo gera", async () => {})
+    test.fixme("TST933 - modelo excluído: campo em branco, obrigatório e laudo gera sem erro", async () => {})
   })
 
   test.describe("Vigência do laudo", () => {
-    test("17 - em branco por padrão e obrigatória", async ({ ltcatReferenciasPage: r }) => {
+    test("TST902 - em branco por padrão e obrigatória", async ({ ltcatReferenciasPage: r }) => {
       await expect(r.vigenciaInicio).toHaveValue("")
       await expect(r.vigenciaFim).toHaveValue("")
       await expect(r.campoVigencia.locator(".mat-form-field-required-marker")).toBeVisible()
     })
 
-    test("17b - salvar com a vigência em branco é bloqueado com a mensagem de obrigatório", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast, page }) => {
+    test("TST902 (salvar) - salvar com a vigência em branco é bloqueado com a mensagem de obrigatório", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast, page }) => {
       await cadastro.preencherObrigatorios({ ...ltcatValido, vigenciaInicio: "", vigenciaFim: "" })
       await cadastro.preencherConfiguracoesObrigatorias()
       await cadastro.salvar()
@@ -282,7 +282,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(page).not.toHaveURL(/idkey=/)
     })
 
-    test("18 - aceita período válido 01/01/2026 a 31/12/2026", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST903 - aceita período válido 01/01/2026 a 31/12/2026", async ({ ltcatReferenciasPage: r, toast }) => {
       await r.vigenciaInicio.pressSequentially("01012026")
       await r.vigenciaFim.click()
       await r.vigenciaFim.pressSequentially("31122026")
@@ -290,10 +290,10 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(r.vigenciaInicio).toHaveValue("01/01/2026")
       await expect(r.vigenciaFim).toHaveValue("31/12/2026")
       await expect(r.campoVigencia).not.toHaveClass(/mat-form-field-invalid/)
-      await expect(page.locator("apls-toast")).toHaveCount(0)
+      await expect(toast.mensagem).toHaveCount(0)
     })
 
-    test("19 - fim menor que o início é bloqueado com alerta", async ({ ltcatReferenciasPage: r, toast }) => {
+    test("TST905 - fim menor que o início é bloqueado com alerta", async ({ ltcatReferenciasPage: r, toast }) => {
       await r.vigenciaInicio.pressSequentially("31122026")
       await r.vigenciaFim.click()
       await r.vigenciaFim.pressSequentially("01012026")
@@ -302,7 +302,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(r.campoVigencia).toHaveClass(/mat-form-field-invalid/)
     })
 
-    test("20 - início maior que o fim é bloqueado com alerta", async ({ ltcatReferenciasPage: r, toast }) => {
+    test("TST904 - início maior que o fim é bloqueado com alerta", async ({ ltcatReferenciasPage: r, toast }) => {
       await r.vigenciaFim.click()
       await r.vigenciaFim.pressSequentially("01012026")
       await r.vigenciaInicio.click()
@@ -313,8 +313,8 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     })
 
     for (const { titulo, campo } of [
-      { titulo: "21 - só a data de início: salvar é bloqueado", campo: "vigenciaInicio" as const },
-      { titulo: "22 - só a data de fim: salvar é bloqueado", campo: "vigenciaFim" as const },
+      { titulo: "TST906 - só a data de início: salvar é bloqueado", campo: "vigenciaInicio" as const },
+      { titulo: "TST907 - só a data de fim: salvar é bloqueado", campo: "vigenciaFim" as const },
     ]) {
       test(titulo, async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast, page }) => {
         await cadastro.preencherObrigatorios()
@@ -331,24 +331,24 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       })
     }
 
-    test("23 - data inválida 32/13/2026 é recusada com alerta e campo em vermelho", async ({ ltcatReferenciasPage: r, toast }) => {
+    test("TST908 - data inválida 32/13/2026 é recusada com alerta e campo em vermelho", async ({ ltcatReferenciasPage: r, toast }) => {
       await r.vigenciaInicio.pressSequentially("32132026")
       await r.vigenciaInicio.press("Tab")
       await toast.temTexto(MSG_DATA_INVALIDA)
       await expect(r.campoVigencia).toHaveClass(/mat-form-field-invalid/)
     })
 
-    test("24 - aceita só números (letras e espaços são ignorados)", async ({ ltcatReferenciasPage: r }) => {
+    test("TST908 (só números) - aceita só números (letras e espaços são ignorados)", async ({ ltcatReferenciasPage: r }) => {
       await r.vigenciaInicio.pressSequentially("ab 01 cd 01 2026")
       await expect(r.vigenciaInicio).toHaveValue("01/01/2026")
     })
 
-    test("24b - aceita no máximo 8 dígitos (dd/mm/aaaa)", async ({ ltcatReferenciasPage: r }) => {
+    test("TST908 (8 dígitos) - aceita no máximo 8 dígitos (dd/mm/aaaa)", async ({ ltcatReferenciasPage: r }) => {
       await r.vigenciaInicio.pressSequentially("010120261234")
       await expect(r.vigenciaInicio).toHaveValue("01/01/2026")
     })
 
-    test("24c - permite colar a data", async ({ ltcatReferenciasPage: r, context, page }) => {
+    test("TST908 (colar) - permite colar a data", async ({ ltcatReferenciasPage: r, context, page }) => {
       await context.grantPermissions(["clipboard-read", "clipboard-write"])
       await page.evaluate(() => navigator.clipboard.writeText("01012026"))
       await r.vigenciaInicio.click()
@@ -356,7 +356,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(r.vigenciaInicio).toHaveValue("01/01/2026")
     })
 
-    test("25 - seleciona início e fim pelo calendário", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST909 - seleciona início e fim pelo calendário", async ({ ltcatReferenciasPage: r, page }) => {
       const hoje = new Date()
       await r.botaoCalendarioVigencia.click()
       const dia = (n: number) => page.locator("mat-calendar .mat-calendar-body-cell-content").getByText(String(n), { exact: true })
@@ -366,7 +366,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(r.vigenciaFim).toHaveValue(formatar(new Date(hoje.getFullYear(), hoje.getMonth(), 15)))
     })
 
-    test("26 - seleciona o período pelo teclado no calendário", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST910 - seleciona o período pelo teclado no calendário", async ({ ltcatReferenciasPage: r, page }) => {
       const hoje = new Date()
       const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 2)
       await r.botaoCalendarioVigencia.click()
@@ -382,7 +382,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
 
   test.describe("Checkboxes", () => {
     for (const opcao of SEMPRE_HABILITADAS) {
-      test(`27 - começa desmarcado e marca/desmarca: ${opcao}`, async ({ ltcatReferenciasPage: r }) => {
+      test(`TST913/TST914/TST916/TST917/TST918 - começa desmarcado e marca/desmarca: ${opcao}`, async ({ ltcatReferenciasPage: r }) => {
         const input = r.opcao(opcao).locator("input")
         await expect(input).not.toBeChecked()
         await expect(input).toBeEnabled()
@@ -393,7 +393,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       })
     }
 
-    test("28 - vários marcados funcionam de forma independente", async ({ ltcatReferenciasPage: r }) => {
+    test("TST919 - vários marcados funcionam de forma independente", async ({ ltcatReferenciasPage: r }) => {
       for (const opcao of SEMPRE_HABILITADAS) await r.alternarOpcao(opcao)
       await r.alternarOpcao("Incluir logotipo no cabeçalho de todas as páginas")
       for (const opcao of SEMPRE_HABILITADAS) {
@@ -402,14 +402,13 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       }
     })
 
-    test("29 - cliques rápidos repetidos mantêm o estado consistente", async ({ ltcatReferenciasPage: r }) => {
-      const label = r.opcao("Incluir logotipo na capa").locator("label")
-      for (let i = 0; i < 5; i++) await label.click({ delay: 0 })
+    test("TST939 - cliques rápidos repetidos mantêm o estado consistente", async ({ ltcatReferenciasPage: r }) => {
+      await cliquesRapidos(r.opcao("Incluir logotipo na capa").locator("label"), 5)
       await expect(r.opcao("Incluir logotipo na capa").locator("input")).toBeChecked()
     })
 
     // o fundo fica transparente nos dois estados; marcado, a borda e o check vão para a cor primária do tema
-    for (const opcao of SEMPRE_HABILITADAS) test(`30 - marcado usa a cor primária do tema na borda e no check: ${opcao}`, async ({ ltcatReferenciasPage: r, page }) => {
+    for (const opcao of SEMPRE_HABILITADAS) test(`TST938 - marcado usa a cor primária do tema na borda e no check: ${opcao}`, async ({ ltcatReferenciasPage: r, page }) => {
       const cb = r.opcao(opcao)
       const cores = () => cb.evaluate((e) => ({
         borda: getComputedStyle(e.querySelector(".mat-checkbox-frame")!).borderColor,
@@ -427,37 +426,37 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     })
 
     // EF: o checkbox não depende do campo ART, só gera o título do anexo no laudo
-    test("31 - anexo de ART marcado não torna o campo ART obrigatório", async ({ ltcatReferenciasPage: r }) => {
+    test("SEM-ID - anexo de ART marcado não torna o campo ART obrigatório", async ({ ltcatReferenciasPage: r }) => {
       await r.alternarOpcao("Incluir anexo de Anotação de Responsabilidade Técnica (ART)")
       await expect(r.art).toHaveAttribute("aria-required", "false")
       await expect(r.art).toHaveValue("")
     })
 
-    test("32 - histórico de revisões vem desmarcado e bloqueado sem revisão, com help", async ({ ltcatReferenciasPage: r, idioma }) => {
+    test("TST920/TST921 - histórico de revisões vem desmarcado e bloqueado sem revisão, com help", async ({ ltcatReferenciasPage: r, idioma }) => {
       await expect(r.opcao(HISTORICO).locator("input")).not.toBeChecked()
       await expect(r.opcao(HISTORICO).locator("input")).toBeDisabled()
       await expect(await idioma.textoDoHelp(r.opcao(HISTORICO).locator("apls-icon"))).toHaveText(HELP_HISTORICO)
     })
 
     test.describe("com uma revisão incluída", () => {
-      test.beforeEach(async ({ ltcatHistoricoRevisoesModal: modal, page }) => {
+      test.beforeEach(async ({ ltcatHistoricoRevisoesModal: modal, toast }) => {
         await modal.abrir()
         await modal.preencher({ versao: "1", motivo: "Motivo 1", responsavel: /211\.576\.325-48/ })
         await modal.botaoIncluirNaTabela.click()
         await expect(modal.linhas).toHaveCount(1)
-        await page.locator("apls-toast").waitFor({ state: "hidden", timeout: 15000 }).catch(() => {})
+        await toast.aguardarSumir()
         await modal.botaoSalvar.click()
         await expect(modal.titulo).toBeHidden()
       })
 
-      test("33 - histórico habilita e pode ser marcado", async ({ ltcatReferenciasPage: r }) => {
+      test("TST922/TST923/TST924 - histórico habilita e pode ser marcado", async ({ ltcatReferenciasPage: r }) => {
         const input = r.opcao(HISTORICO).locator("input")
         await expect(input).toBeEnabled()
         await r.alternarOpcao(HISTORICO)
         await expect(input).toBeChecked()
       })
 
-      test("34 - marcado, ao remover todas as revisões e salvar a modal, volta desmarcado e bloqueado", async ({ ltcatReferenciasPage: r, ltcatHistoricoRevisoesModal: modal, page }) => {
+      test("TST925 - marcado, ao remover todas as revisões e salvar a modal, volta desmarcado e bloqueado", async ({ ltcatReferenciasPage: r, ltcatHistoricoRevisoesModal: modal, toast }) => {
         const input = r.opcao(HISTORICO).locator("input")
         await r.alternarOpcao(HISTORICO)
         await expect(input).toBeChecked()
@@ -466,7 +465,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
         await modal.botaoDaLinha(0, "Excluir").click()
         await modal.confirmacao("Deseja realmente excluir este item?").getByRole("button", { name: "Excluir" }).click()
         await expect(modal.linhas).toHaveCount(0)
-        await page.locator("apls-toast").waitFor({ state: "hidden", timeout: 15000 }).catch(() => {})
+        await toast.aguardarSumir()
         await modal.botaoSalvar.click()
         await expect(modal.titulo).toBeHidden()
 
@@ -476,7 +475,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     })
   })
 
-  test("35 - refresh sem salvar perde as alterações", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+  test("TST941 - refresh sem salvar perde as alterações", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
     await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
     await r.vigenciaInicio.pressSequentially("01012026")
     await r.alternarOpcao("Incluir logotipo na capa")
@@ -489,12 +488,12 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
 
   // o "Gerar laudo" não devolve download direto (testado 4 min sem arquivo); falta saber por onde o
   // documento chega para conferir o conteúdo
-  test.fixme("36 - laudo inclui o histórico de revisões quando marcado e não inclui quando desmarcado", async () => {})
-  test.fixme("37 - laudo reflete logotipo na capa, logotipo no cabeçalho, anexo de ART e data na capa", async () => {})
-  test.fixme("38 - laudo com nenhum checkbox marcado sai sem os elementos opcionais", async () => {})
+  test.fixme("TST927/TST928 - laudo inclui o histórico de revisões quando marcado e não inclui quando desmarcado", async () => {})
+  test.fixme("TST929/TST930 - laudo reflete logotipo na capa, logotipo no cabeçalho, anexo de ART e data na capa", async () => {})
+  test.fixme("TST931 - laudo com nenhum checkbox marcado sai sem os elementos opcionais", async () => {})
 
   // cria 1 LTCAT novo no ambiente de homologação a cada execução (sem rollback)
-  test("40b - salvar sem marcar nenhum checkbox mantém todos desmarcados ao reabrir", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+  test("TST942 (nenhum marcado) - salvar sem marcar nenhum checkbox mantém todos desmarcados ao reabrir", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
     await cadastro.preencherObrigatorios({ ...ltcatValido, vigenciaInicio: "01/01/2026", vigenciaFim: "31/12/2026" })
     await cadastro.preencherConfiguracoesObrigatorias()
     await cadastro.salvar()
@@ -504,7 +503,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     for (const opcao of [...SEMPRE_HABILITADAS, HISTORICO]) await expect(r.opcao(opcao).locator("input")).not.toBeChecked()
   })
 
-  test("40 - salva tudo, recarrega, edita, descarta uma edição e persiste a outra", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, ltcatHistoricoRevisoesModal: modal, page }) => {
+  test("TST911/TST912/TST915/TST926/TST932/TST934/TST935/TST940/TST942 - salva tudo, recarrega, edita, descarta uma edição e persiste a outra", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, ltcatHistoricoRevisoesModal: modal, toast, page }) => {
     test.setTimeout(240000)
     await cadastro.preencherObrigatorios({ ...ltcatValido, vigenciaInicio: "01/01/2026", vigenciaFim: "31/12/2026" })
     await cadastro.preencherConfiguracoesObrigatorias()
@@ -512,7 +511,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     await modal.abrir()
     await modal.preencher({ versao: "1", motivo: "Motivo 1", responsavel: /211\.576\.325-48/ })
     await modal.botaoIncluirNaTabela.click()
-    await page.locator("apls-toast").waitFor({ state: "hidden", timeout: 15000 }).catch(() => {})
+    await toast.aguardarSumir()
     await modal.botaoSalvar.click()
     await expect(modal.titulo).toBeHidden()
     for (const opcao of [...SEMPRE_HABILITADAS, HISTORICO]) await r.alternarOpcao(opcao)
@@ -559,45 +558,59 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
   // os 3 campos usam o mesmo componente: type="text", maxlength=10; o que não é dígito é descartado na digitação
   // e na colagem (sem mensagem de erro) e "00010" vira "10"
   test.describe("Expostos", () => {
+    // cada campo tem o seu bloco de IDs na planilha; listas de IDs na ordem [Mulheres, Homens, PCDs]
     const CAMPOS = [
-      { nome: "Mulheres", campo: "expostosMulheres" as const, help: "Informe a quantidade de mulheres expostas neste LTCAT" },
-      { nome: "Homens", campo: "expostosHomens" as const, help: "Informe a quantidade de homens expostos neste LTCAT" },
-      { nome: "PCDs", campo: "expostosPcds" as const, help: "Informe a quantidade pessoas com deficiência expostas neste LTCAT" },
+      {
+        nome: "Mulheres", campo: "expostosMulheres" as const, help: "Informe a quantidade de mulheres expostas neste LTCAT",
+        ids: { inicial: "TST944/TST945", rapido: "TST958", limpar: "TST959", help: "TST966/TST967", foco: "TST968/TST972" },
+      },
+      {
+        nome: "Homens", campo: "expostosHomens" as const, help: "Informe a quantidade de homens expostos neste LTCAT",
+        ids: { inicial: "TST975/TST976", rapido: "TST989", limpar: "TST990", help: "TST995/TST996", foco: "TST997" },
+      },
+      {
+        nome: "PCDs", campo: "expostosPcds" as const, help: "Informe a quantidade pessoas com deficiência expostas neste LTCAT",
+        ids: { inicial: "TST1008/TST1009", rapido: "TST1017 (digitação rápida)", limpar: "TST1023", help: "TST1024", foco: "TST1038" },
+      },
     ]
-    const ENTRADAS: [string, string, string][] = [
-      ["inteiro válido", "10", "10"],
-      ["zero", "0", "0"],
-      ["10 dígitos", "9999999999", "9999999999"],
-      ["mais de 10 dígitos é limitado a 10", "123456789012345", "1234567890"],
-      ["negativo: o '-' é descartado", "-5", "5"],
-      ["decimal: o '.' é descartado e os dígitos se juntam", "10.5", "105"],
-      ["letras", "abc", ""],
-      ["caracteres especiais", "@#%", ""],
-      ["números e letras", "10abc", "10"],
-      ["zeros à esquerda são normalizados", "00010", "10"],
-      ["só espaços", "   ", ""],
-      ["espaços ao redor", " 10 ", "10"],
+    const ENTRADAS: [string, string, string, string[]][] = [
+      ["inteiro válido", "10", "10", ["TST946", "TST977", "TST1010"]],
+      ["zero", "0", "0", ["TST955", "TST986", "TST1011"]],
+      ["10 dígitos", "9999999999", "9999999999", ["TST947", "TST978", "TST1012"]],
+      ["mais de 10 dígitos é limitado a 10", "123456789012345", "1234567890", ["TST948", "TST979", "TST1013"]],
+      ["negativo: o '-' é descartado", "-5", "5", ["TST950", "TST981", "TST1014"]],
+      ["decimal: o '.' é descartado e os dígitos se juntam", "10.5", "105", ["TST951", "TST982", "TST1015"]],
+      ["letras", "abc", "", ["TST952", "TST983", "TST1016"]],
+      ["caracteres especiais", "@#%", "", ["TST953", "TST984", "TST1017"]],
+      ["números e letras", "10abc", "10", ["TST954", "TST985", "TST1016 (números e letras)"]],
+      ["zeros à esquerda são normalizados", "00010", "10", ["TST956", "TST987", "TST1010 (zeros à esquerda)"]],
+      ["só espaços", "   ", "", ["TST957", "TST988", "TST1037 (só espaços)"]],
+      ["espaços ao redor", " 10 ", "10", ["TST957 (espaços ao redor)", "TST988 (espaços ao redor)", "TST1037"]],
     ]
-    const formField = (campo: Locator) => campo.locator("xpath=ancestor::mat-form-field[1]")
-
-    for (const { nome, campo, help } of CAMPOS) {
+    const COLAGENS: [string, string[]][] = [
+      ["123456789012345", ["TST949", "TST980", "TST1019"]],
+      ["abc", ["TST952 (colar)", "TST983 (colar)", "TST1018"]],
+      ["10abc", ["TST954 (colar)", "TST985 (colar)", "TST1018 (números e letras)"]],
+      [" 10 ", ["TST957 (colar)", "TST988 (colar)", "TST1037 (colar)"]],
+    ]
+    for (const [i, { nome, campo, help, ids }] of CAMPOS.entries()) {
       test.describe(nome, () => {
-        test(`41 - ${nome}: visível, habilitado, vazio e não obrigatório`, async ({ ltcatReferenciasPage: r }) => {
+        test(`${ids.inicial} - ${nome}: visível, habilitado, vazio e não obrigatório`, async ({ ltcatReferenciasPage: r }) => {
           await expect(r[campo]).toBeVisible()
           await expect(r[campo]).toBeEnabled()
           await expect(r[campo]).toHaveValue("")
-          await expect(formField(r[campo]).locator(".mat-form-field-required-marker")).toHaveCount(0)
+          await expect(r.campoExpostos(campo).locator(".mat-form-field-required-marker")).toHaveCount(0)
         })
 
-        for (const [titulo, digitado, esperado] of ENTRADAS) {
-          test(`42 - ${nome}: digitar ${titulo} (${JSON.stringify(digitado)})`, async ({ ltcatReferenciasPage: r }) => {
+        for (const [titulo, digitado, esperado, idsEntrada] of ENTRADAS) {
+          test(`${idsEntrada[i]} - ${nome}: digitar ${titulo} (${JSON.stringify(digitado)})`, async ({ ltcatReferenciasPage: r }) => {
             await r[campo].pressSequentially(digitado)
             await expect(r[campo]).toHaveValue(esperado)
           })
         }
 
-        for (const colado of ["123456789012345", "abc", "10abc", " 10 "]) {
-          test(`43 - ${nome}: colar ${JSON.stringify(colado)}`, async ({ ltcatReferenciasPage: r, context, page }) => {
+        for (const [colado, idsColagem] of COLAGENS) {
+          test(`${idsColagem[i]} - ${nome}: colar ${JSON.stringify(colado)}`, async ({ ltcatReferenciasPage: r, context, page }) => {
             await context.grantPermissions(["clipboard-read", "clipboard-write"])
             await page.evaluate((t) => navigator.clipboard.writeText(t), colado)
             await r[campo].click()
@@ -606,23 +619,23 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
           })
         }
 
-        test(`44 - ${nome}: digitação rápida de valores inválidos não trava o campo`, async ({ ltcatReferenciasPage: r }) => {
+        test(`${ids.rapido} - ${nome}: digitação rápida de valores inválidos não trava o campo`, async ({ ltcatReferenciasPage: r }) => {
           await r[campo].pressSequentially("a1-b2.c3@d4#e5 f6g7h8i9j0k1l2", { delay: 0 })
           await expect(r[campo]).toHaveValue("1234567890")
           await expect(r[campo]).toBeEnabled()
         })
 
-        test(`45 - ${nome}: limpar depois de preencher volta para vazio`, async ({ ltcatReferenciasPage: r }) => {
+        test(`${ids.limpar} - ${nome}: limpar depois de preencher volta para vazio`, async ({ ltcatReferenciasPage: r }) => {
           await r[campo].pressSequentially("25")
           await r[campo].fill("")
           await expect(r[campo]).toHaveValue("")
         })
 
-        test(`46 - ${nome}: help`, async ({ ltcatReferenciasPage: r, idioma }) => {
-          await expect(await idioma.textoDoHelp(formField(r[campo]).locator("apls-icon"))).toHaveText(help)
+        test(`${ids.help} - ${nome}: help`, async ({ ltcatReferenciasPage: r, idioma }) => {
+          await expect(await idioma.textoDoHelp(r.campoExpostos(campo).locator("apls-icon"))).toHaveText(help)
         })
 
-        test(`47 - ${nome}: foco ao clicar e valor independente dos outros campos`, async ({ ltcatReferenciasPage: r }) => {
+        test(`${ids.foco} - ${nome}: foco ao clicar e valor independente dos outros campos`, async ({ ltcatReferenciasPage: r }) => {
           await r[campo].click()
           await expect(r[campo]).toBeFocused()
           await r[campo].pressSequentially("3")
@@ -633,12 +646,12 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     }
 
     // POSSÍVEL ERRO DE TEXTO (EF e tela): "quantidade pessoas com deficiência" sem o "de"; a planilha pede "quantidade de pessoas"
-    test.fail("46b - PCDs: help com a ortografia 'quantidade de pessoas'", async ({ ltcatReferenciasPage: r, idioma }) => {
-      const icone = formField(r.expostosPcds).locator("apls-icon")
+    test.fail("TST1025 - PCDs: help com a ortografia 'quantidade de pessoas'", async ({ ltcatReferenciasPage: r, idioma }) => {
+      const icone = r.campoExpostos("expostosPcds").locator("apls-icon")
       await expect(await idioma.textoDoHelp(icone)).toHaveText("Informe a quantidade de pessoas com deficiência expostas neste LTCAT")
     })
 
-    test("48 - TAB percorre Mulheres, Homens e PCDs nessa ordem", async ({ ltcatReferenciasPage: r }) => {
+    test("TST969/TST997 - TAB percorre Mulheres, Homens e PCDs nessa ordem", async ({ ltcatReferenciasPage: r }) => {
       await r.expostosMulheres.click()
       await r.expostosMulheres.press("Tab")
       await expect(r.expostosHomens).toBeFocused()
@@ -646,9 +659,8 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(r.expostosPcds).toBeFocused()
     })
 
-    test("49 - três campos alinhados com a mesma altura; em resolução reduzida continuam visíveis", async ({ ltcatReferenciasPage: r, page }) => {
-      const caixas = []
-      for (const { campo } of CAMPOS) caixas.push((await formField(r[campo]).locator(".mat-form-field-flex").boundingBox())!)
+    test("TST970/TST998/TST1026/TST1035 - três campos alinhados com a mesma altura; em resolução reduzida continuam visíveis", async ({ ltcatReferenciasPage: r, page }) => {
+      const caixas = await Promise.all(CAMPOS.map(async ({ campo }) => (await r.campoExpostos(campo).locator(".mat-form-field-flex").boundingBox())!))
       expect(new Set(caixas.map((c) => c.y)).size).toBe(1)
       expect(new Set(caixas.map((c) => c.height)).size).toBe(1)
       await page.setViewportSize({ width: 768, height: 900 })
@@ -656,7 +668,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     })
 
-    test("50 - preencher os três, limpar um mantendo os outros e valores discrepantes", async ({ ltcatReferenciasPage: r }) => {
+    test("TST1002/TST1004/TST1006 - preencher os três, limpar um mantendo os outros e valores discrepantes", async ({ ltcatReferenciasPage: r }) => {
       await r.expostosMulheres.pressSequentially("10")
       await r.expostosHomens.pressSequentially("15")
       await r.expostosPcds.pressSequentially("5")
@@ -673,7 +685,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(r.expostosMulheres).toHaveValue("9999999999")
     })
 
-    test("51 - salvar com os três vazios é permitido", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test("TST961/TST992/TST1003/TST1020 - salvar com os três vazios é permitido", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       await cadastro.preencherObrigatorios({ ...ltcatValido, vigenciaInicio: "01/01/2026", vigenciaFim: "31/12/2026" })
       await cadastro.preencherConfiguracoesObrigatorias()
       await cadastro.salvar()
@@ -687,7 +699,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     // BUG REAL (visto em 2026-10-20): o campo aceita 10 dígitos (EF), mas a API só aceita int (até 2147483647);
     // acima disso o POST /ltcat_ghe/ltcat responde 400 "Numeric value out of range of int" e a tela mostra
     // "Ocorreu um erro inesperado. Favor entrar em contato com o suporte."
-    test.fail("51b - salvar com 9999999999 (10 dígitos, limite da EF) salva normalmente", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test.fail("TST971/TST999 - salvar com 9999999999 (10 dígitos, limite da EF) salva normalmente", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       await cadastro.preencherObrigatorios({ ...ltcatValido, vigenciaInicio: "01/01/2026", vigenciaFim: "31/12/2026" })
       await cadastro.preencherConfiguracoesObrigatorias()
       await r.expostosHomens.pressSequentially("9999999999")
@@ -696,7 +708,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
       await expect(page).toHaveURL(/idkey=\d+/)
     })
 
-    test("52 - salva (com 2147483647), reabre, edita, limpa um mantendo os outros e descarta edição sem salvar", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+    test("TST960/TST962/TST963/TST965/TST991/TST993/TST994/TST1000/TST1005/TST1007/TST1021/TST1022/TST1029/TST1039 - salva (com 2147483647), reabre, edita, limpa um mantendo os outros e descarta edição sem salvar", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
       test.setTimeout(240000)
       const recarregar = async () => {
         await page.reload()
@@ -739,7 +751,7 @@ test.describe("LTCAT - Referências - Configurações gerais", () => {
     })
 
     // fora deste spec: duplicar LTCAT, laudo (suíte de gerar laudo), navegadores, dados antigos e mockup
-    test.fixme("53 - duplicar um LTCAT copia os valores de Expostos", async () => {})
-    test.fixme("54 - laudo reflete os valores de Expostos (inclusive 9999999999 sem quebrar o layout)", async () => {})
+    test.fixme("TST1030 - duplicar um LTCAT copia os valores de Expostos", async () => {})
+    test.fixme("TST1031/TST1032 - laudo reflete os valores de Expostos (inclusive 9999999999 sem quebrar o layout)", async () => {})
   })
 })

@@ -44,4 +44,10 @@ export class LoginPage {
     await this.enviarFormulario(credenciais.usuario, credenciais.senha)
     await this.estaLogado()
   }
+
+  // o ícone de logout da barra superior não tem nome acessível
+  async sair() {
+    await this.page.locator("apls-navegador-superior apls-icon[icon='logout']").click()
+    await this.page.waitForURL(/\/login/)
+  }
 }

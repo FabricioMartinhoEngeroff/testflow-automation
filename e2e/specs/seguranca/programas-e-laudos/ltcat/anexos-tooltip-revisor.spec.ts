@@ -21,7 +21,7 @@ test.describe("LTCAT - Anexos - tooltip e revisor", () => {
     await login.entrar()
     await ltcatCadastroPage.abrir()
     await ltcatCadastroPage.abrirAba("Anexos")
-    await incluirAnexo(page, a, m, "Auditoria")
+    await incluirAnexo(a, m, "Auditoria")
   })
 
   test("TST1222 - passar o mouse no ícone exibe o tooltip", async ({ ltcatAnexosPage: a, revisor }) => {
@@ -93,8 +93,8 @@ test.describe("LTCAT - Anexos - revisor nos 3 idiomas", () => {
     await c.preencherObrigatorios(ltcatValido)
     await c.preencherConfiguracoesObrigatorias()
     await c.abrirAba("Anexos")
-    await incluirAnexo(page, a, m, "Sem revisão")
-    await incluirAnexo(page, a, m, "Revisado")
+    await incluirAnexo(a, m, "Sem revisão")
+    await incluirAnexo(a, m, "Revisado")
     await abrirEdicaoAnexo(a, m, 1)
     await m.descricao.fill("Revisado!")
     await m.botaoSalvar.click()

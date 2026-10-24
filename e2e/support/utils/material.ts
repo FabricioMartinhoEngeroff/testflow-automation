@@ -11,3 +11,6 @@ function porTexto(page: Page, seletor: string, texto: string): Locator {
 
 export const matCheckbox = (page: Page, texto: string) => porTexto(page, "mat-checkbox", texto)
 export const matRadio = (page: Page, texto: string) => porTexto(page, "mat-radio-button", texto)
+
+// o texto do mat-tooltip fica num elemento à parte, ligado ao gatilho pelo aria-describedby
+export const tooltipDe = async (gatilho: Locator) => gatilho.page().locator(`#${await gatilho.getAttribute("aria-describedby")}`)

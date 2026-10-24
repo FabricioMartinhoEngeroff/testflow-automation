@@ -43,7 +43,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
 
   test.describe("Inclusão e modal", () => {
     test("TST1150 - salva com dados válidos e o anexo entra no grid", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Salvamento válido")
+      await incluirAnexo(a, m, "Salvamento válido")
       expect(await a.descricoes()).toEqual(["Salvamento válido"])
       await expect(a.linhasAnexo.first()).toContainText(/minimo.*\.pdf/i)
     })
@@ -62,7 +62,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
     })
 
     test("TST1179 - 'Salvar e adicionar outro' não aparece na edição", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Para editar")
+      await incluirAnexo(a, m, "Para editar")
       await abrirEdicao(a, m)
       await expect(m.botaoSalvarEAdicionarOutro).toHaveCount(0)
     })
@@ -77,7 +77,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
     })
 
     test("TST1180 - Fechar sem alterações (edição) fecha direto, sem confirmação", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Sem alterar")
+      await incluirAnexo(a, m, "Sem alterar")
       await abrirEdicao(a, m)
       await m.botaoFechar.click()
       await expect(m.tituloEdicao).toHaveCount(0)
@@ -99,7 +99,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
     }
 
     test("TST1180 - Fechar com alteração na edição pede confirmação", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Original")
+      await incluirAnexo(a, m, "Original")
       await abrirEdicao(a, m)
       await m.descricao.fill("Alterada")
       await m.botaoFechar.click()
@@ -154,7 +154,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
 
   test.describe("Edição", () => {
     test.beforeEach(async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Original")
+      await incluirAnexo(a, m, "Original")
     })
 
     test("TST1152 - editar abre a modal com os dados preenchidos", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m }) => {
@@ -230,24 +230,23 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
   test.describe("Grid, ordem e exclusão", () => {
     test("TST1157 - anexos seguem a ordem de inserção", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
       test.setTimeout(120000)
-      for (const d of ["Primeiro", "Segundo", "Terceiro"]) await incluirAnexo(page, a, m, d)
+      for (const d of ["Primeiro", "Segundo", "Terceiro"]) await incluirAnexo(a, m, d)
       expect(await a.descricoes()).toEqual(["Primeiro", "Segundo", "Terceiro"])
     })
 
     test("TST1158 - texto 'ordem definida abaixo' condiz com o grid (ordem de inserção)", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
       test.setTimeout(120000)
       await expect(a.orientacao).toContainText("ordem definida abaixo")
-      for (const d of ["Z - inserido primeiro", "A - inserido depois"]) await incluirAnexo(page, a, m, d)
+      for (const d of ["Z - inserido primeiro", "A - inserido depois"]) await incluirAnexo(a, m, d)
       // não ordena alfabeticamente: vale a ordem em que foram adicionados
       expect(await a.descricoes()).toEqual(["Z - inserido primeiro", "A - inserido depois"])
     })
 
     test("TST1159 - vários anexos são listados, cada um com download, nome e ações", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
       test.setTimeout(120000)
-      for (const d of ["Um", "Dois", "Três"]) await incluirAnexo(page, a, m, d)
+      for (const d of ["Um", "Dois", "Três"]) await incluirAnexo(a, m, d)
       await expect(a.linhasAnexo).toHaveCount(3)
-      for (let i = 0; i < 3; i++) {
-        const linha = a.linhasAnexo.nth(i)
+      for (const [i, linha] of (await a.linhasAnexo.all()).entries()) {
         await expect(linha.locator("mat-icon", { hasText: "download" })).toBeVisible()
         await expect(linha).toContainText(/minimo.*\.pdf/i)
         await expect(a.botaoEditar(i)).toBeVisible()
@@ -257,10 +256,10 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
 
     test("TST1161 - excluir remove o anexo do grid", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
       test.setTimeout(120000)
-      for (const d of ["Fica", "Sai"]) await incluirAnexo(page, a, m, d)
+      for (const d of ["Fica", "Sai"]) await incluirAnexo(a, m, d)
       await a.botaoExcluir(1).click()
       await expect(a.popupExclusao).toBeVisible()
-      await a.popupExclusao.getByRole("button", { name: "Excluir" }).click()
+      await a.botaoPopupExclusao("Excluir").click()
       await expect(a.popupExclusao).toHaveCount(0)
       expect(await a.descricoes()).toEqual(["Fica"])
     })
@@ -281,12 +280,12 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
     test("TST1163 - tipos de arquivo diferentes aparecem de forma consistente", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
       test.setTimeout(150000)
       const tipos = ["minimo.pdf", "imagem.png", "documento.doc"]
-      for (const arq of tipos) await incluirAnexo(page, a, m, `Tipo ${arq}`, arq)
+      for (const arq of tipos) await incluirAnexo(a, m, `Tipo ${arq}`, arq)
       await expect(a.linhasAnexo).toHaveCount(3)
-      for (let i = 0; i < tipos.length; i++) {
+      for (const [i, arq] of tipos.entries()) {
         const linha = a.linhasAnexo.nth(i)
         await expect(linha.locator("mat-icon", { hasText: "download" })).toBeVisible()
-        await expect(linha).toContainText(new RegExp(tipos[i].split(".")[0]))
+        await expect(linha).toContainText(new RegExp(arq.split(".")[0]))
       }
     })
 
@@ -322,10 +321,10 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
 
     test("TST1170 - vários anexos carregam e listam corretamente", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
       test.setTimeout(240000)
-      const total = 8
-      for (let i = 1; i <= total; i++) await incluirAnexo(page, a, m, `Anexo ${i}`)
-      await expect(a.linhasAnexo).toHaveCount(total)
-      expect(await a.descricoes()).toEqual(Array.from({ length: total }, (_, i) => `Anexo ${i + 1}`))
+      const descricoes = Array.from({ length: 8 }, (_, i) => `Anexo ${i + 1}`)
+      for (const descricao of descricoes) await incluirAnexo(a, m, descricao)
+      await expect(a.linhasAnexo).toHaveCount(descricoes.length)
+      expect(await a.descricoes()).toEqual(descricoes)
     })
   })
 
@@ -348,7 +347,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
 
   test.describe("Auditoria", () => {
     test("TST1189 - tooltip mostra criado por e data; revisor ainda vazio", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, revisor, page }) => {
-      await incluirAnexo(page, a, m, "Auditoria")
+      await incluirAnexo(a, m, "Auditoria")
       const campos = await revisor.camposDoTooltip(revisor.iconeDaLinha(a.linhasAnexo.first()))
       expect(campos.criadoPor).toMatch(/^@\S+ - .+/)
       esperarCriacao(campos)
@@ -356,7 +355,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
     })
 
     test("TST1190 - editar preenche revisor e data da revisão", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, revisor, page }) => {
-      await incluirAnexo(page, a, m, "Antes da revisão")
+      await incluirAnexo(a, m, "Antes da revisão")
       await abrirEdicao(a, m)
       await m.descricao.fill("Depois da revisão")
       await m.botaoSalvar.click()
@@ -369,13 +368,13 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
 
   test.describe("Grid de Anexos (TST1192-TST1200)", () => {
     test("TST1192 - anexos incluídos são listados no grid", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Listado no grid")
+      await incluirAnexo(a, m, "Listado no grid")
       await expect(a.linhasAnexo).toHaveCount(1)
       await expect(a.semRegistros).toHaveCount(0)
     })
 
     test("TST1193 - coluna Anexo: descrição + ícone de download + nome do arquivo", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Coluna anexo")
+      await incluirAnexo(a, m, "Coluna anexo")
       const linha = a.linhasAnexo.first()
       await expect(linha.locator("td.cdk-column-descricao")).toHaveText(/Coluna anexo/)
       const celulaArquivo = linha.locator("td.cdk-column-anexo")
@@ -385,7 +384,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
 
     // o servidor acrescenta um sufixo aleatório ao nome (ex.: minimo_ab12cd.pdf)
     test("TST1194 - o ícone de download baixa o arquivo enviado", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Download")
+      await incluirAnexo(a, m, "Download")
       const nomeNoGrid = (await a.linhasAnexo.first().locator("td.cdk-column-anexo span").innerText()).trim()
       const [download] = await Promise.all([
         page.waitForEvent("download"),
@@ -407,7 +406,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
     ]
     for (const [original, base, ext] of nomesAlterados) {
       test(`TST1195 - nome de ${original} no grid e no download (ignorando o sufixo)`, async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-        await incluirAnexo(page, a, m, "Nome", original)
+        await incluirAnexo(a, m, "Nome", original)
 
         const nomeNoGrid = (await a.linhasAnexo.first().locator("td.cdk-column-anexo span").innerText()).trim()
         expect(nomeNoGrid).toMatch(new RegExp(`^${base}(_[a-z0-9]+)?\\.${ext}$`))
@@ -421,7 +420,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
     }
 
     test("TST1196 - descrição exibida corresponde ao campo preenchido", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-      await incluirAnexo(page, a, m, "Descrição específica 123")
+      await incluirAnexo(a, m, "Descrição específica 123")
       expect(await a.descricoes()).toEqual(["Descrição específica 123"])
     })
 
@@ -453,15 +452,15 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
         ["Imagem", "imagem.png", /imagem.*\.png/i],
         ["Word", "documento.doc", /documento.*\.doc/i],
       ]
-      for (const [descricao, arq] of casos) await incluirAnexo(page, a, m, descricao, arq)
+      for (const [descricao, arq] of casos) await incluirAnexo(a, m, descricao, arq)
       expect(await a.descricoes()).toEqual(["PDF", "Imagem", "Word"])
-      for (let i = 0; i < casos.length; i++) await expect(a.linhasAnexo.nth(i)).toContainText(casos[i][2])
+      for (const [i, [, , nomeDoArquivo]] of casos.entries()) await expect(a.linhasAnexo.nth(i)).toContainText(nomeDoArquivo)
     })
 
-    test("TST1200 - grid vazio mostra 'Sem registros para listar.' centralizado, sem erro", async ({ ltcatAnexosPage: a, page }) => {
+    test("TST1200 - grid vazio mostra 'Sem registros para listar.' centralizado, sem erro", async ({ ltcatAnexosPage: a, toast }) => {
       await expect(a.semRegistros).toBeVisible()
       await expect(a.linhasAnexo).toHaveCount(0)
-      await expect(page.locator("apls-toast")).toHaveCount(0)
+      await expect(toast.mensagem).toHaveCount(0)
       // mede com polling: logo depois de trocar de aba a tela ainda está animando e a posição varia
       await expect
         .poll(async () => {
@@ -481,8 +480,8 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
       await c.preencherObrigatorios(ltcatValido)
       await c.preencherConfiguracoesObrigatorias()
       await c.abrirAba("Anexos")
-      await incluirAnexo(page, a, m, "Grid persistido", "imagem.png")
-      await incluirAnexo(page, a, m, "Segundo persistido", "minimo.pdf")
+      await incluirAnexo(a, m, "Grid persistido", "imagem.png")
+      await incluirAnexo(a, m, "Segundo persistido", "minimo.pdf")
       await salvarLtcat(c, page)
 
       await page.reload()
@@ -498,7 +497,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
       await c.preencherObrigatorios(ltcatValido)
       await c.preencherConfiguracoesObrigatorias()
       await c.abrirAba("Anexos")
-      await incluirAnexo(page, a, m, "Persistência")
+      await incluirAnexo(a, m, "Persistência")
       await salvarLtcat(c, page)
 
       await page.reload()
@@ -513,7 +512,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
       await c.preencherObrigatorios(ltcatValido)
       await c.preencherConfiguracoesObrigatorias()
       await c.abrirAba("Anexos")
-      for (const d of ["Z - primeiro", "A - segundo", "M - terceiro"]) await incluirAnexo(page, a, m, d)
+      for (const d of ["Z - primeiro", "A - segundo", "M - terceiro"]) await incluirAnexo(a, m, d)
       await salvarLtcat(c, page)
 
       await page.reload()
@@ -527,7 +526,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
       await c.preencherObrigatorios(ltcatValido)
       await c.preencherConfiguracoesObrigatorias()
       await c.abrirAba("Anexos")
-      await incluirAnexo(page, a, m, "Auditoria persistente")
+      await incluirAnexo(a, m, "Auditoria persistente")
       const antes = await revisor.camposDoTooltip(revisor.iconeDaLinha(a.linhasAnexo.first()))
       await salvarLtcat(c, page)
 
@@ -541,7 +540,7 @@ test.describe("LTCAT - Anexos - grid e edição", () => {
   })
 
   test("TST1168 - sair sem salvar descarta os anexos incluídos", async ({ ltcatCadastroPage: c, ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
-    await incluirAnexo(page, a, m, "Vai ser perdido")
+    await incluirAnexo(a, m, "Vai ser perdido")
     await c.botaoVoltar.click()
     await confirmarSaidaSemSalvar(page)
     await c.abrir()

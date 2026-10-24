@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test"
+import { tooltipDe } from "@support/utils/material"
 
 const TEMPO_UPLOAD_MS = Number(process.env.UPLOAD_MS ?? 2500)
 
@@ -48,8 +49,7 @@ export class LtcatAnexoModal {
   }
 
   async textoDoHelpArquivo() {
-    const id = await this.helpArquivo.getAttribute("aria-describedby")
-    return (await this.page.locator(`#${id}`).textContent())?.trim()
+    return (await (await tooltipDe(this.helpArquivo)).textContent())?.trim()
   }
 
   get areaDeArquivo() {

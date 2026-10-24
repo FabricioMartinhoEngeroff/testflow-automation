@@ -6,10 +6,11 @@
 import type { Page } from "@playwright/test"
 import { test, expect } from "@support"
 import type { LinhaConfig } from "@support/actions/seguranca/programas-e-laudos/ConfiguracaoGeral"
-import type { OrdenacaoGhes } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATConfiguracoes"
+import type { LtcatConfiguracoesPage, OrdenacaoGhes } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATConfiguracoes"
 import type { LtcatCadastroPage } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro"
 import { URLS } from "@support/urls"
 import { ltcatValido } from "@support/data/ltcat"
+import { repetir } from "@support/utils/repetir"
 
 const MSG_DESCRICAO = "Para prosseguir ao menos uma opção de descrição das atividades deve ser marcada. Favor verificar."
 const RISCOS = "Incluir riscos associados às atividades do GHE"
@@ -43,7 +44,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
     if (await cg.botaoSalvar.isEnabled()) await cg.salvar()
   })
 
-  async function salvarERecarregar(cadastro: LtcatCadastroPage, page: Page) {
+  const salvarERecarregar = async (cadastro: LtcatCadastroPage, page: Page) => {
     await cadastro.salvar()
     await expect(cadastro.mensagemSalvoComSucesso).toBeVisible({ timeout: 15000 })
     await page.reload()
@@ -51,18 +52,18 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
     await cadastro.abrirAba("Configurações")
   }
 
-  async function preencherReferencias(cadastro: LtcatCadastroPage) {
+  const preencherReferencias = async (cadastro: LtcatCadastroPage) => {
     await cadastro.abrirAba("Referências")
     await cadastro.preencherObrigatorios(DADOS)
     await cadastro.abrirAba("Configurações")
   }
 
   test.describe("Listar os GHEs em ordem alfabética por", () => {
-    test("01 - alternar várias vezes entre 'Código do GHE' e 'Código da área' mantém só a última opção", async ({ ltcatConfiguracoesPage: c }) => {
-      for (let i = 0; i < 3; i++) {
+    test("TST1048 - alternar várias vezes entre 'Código do GHE' e 'Código da área' mantém só a última opção", async ({ ltcatConfiguracoesPage: c }) => {
+      await repetir(3, async () => {
         await c.escolherOrdenacao("Código da área a que pertence")
         await c.escolherOrdenacao("Código do GHE")
-      }
+      })
       await c.escolherOrdenacao("Código da área a que pertence")
       await expect(c.ordenacao("Código da área a que pertence").locator("input")).toBeChecked()
       await expect(c.ordenacao("Código do GHE").locator("input")).not.toBeChecked()
@@ -70,14 +71,14 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
     })
 
     // planilha: o radio sempre abre com uma opção já preenchida (a gravada na Configuração Geral, 'Código do GHE' por padrão)
-    test("01b - ao abrir sempre há uma ordenação marcada e ela é a da Configuração Geral", async ({ ltcatConfiguracoesPage: c }) => {
+    test("TST1047 - ao abrir sempre há uma ordenação marcada e ela é a da Configuração Geral", async ({ ltcatConfiguracoesPage: c }) => {
       await expect(c.ordenacoesMarcadas).toHaveCount(1)
       const esperada = original.find((l) => l.rotulo.startsWith("Listar os GHEs"))!.valor as OrdenacaoGhes
       await expect(c.ordenacao(esperada).locator("input")).toBeChecked()
     })
 
     for (const opcao of ORDENACOES) {
-      test(`02 - radio: só '${opcao}' fica marcado ao escolhê-lo`, async ({ ltcatConfiguracoesPage: c }) => {
+      test(`TST1049 - radio: só '${opcao}' fica marcado ao escolhê-lo`, async ({ ltcatConfiguracoesPage: c }) => {
         await c.escolherOrdenacao(opcao)
         await expect(c.ordenacoesMarcadas).toHaveCount(1)
         await expect(c.ordenacao(opcao).locator("input")).toBeChecked()
@@ -86,7 +87,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
     }
 
     // nunca vazio e nunca mais de uma: clicar de novo na opção já marcada não a desmarca, e cada troca deixa exatamente uma
-    test("02b - clicar de novo na opção marcada mantém ela marcada (grupo nunca fica vazio)", async ({ ltcatConfiguracoesPage: c }) => {
+    test("TST1049 (clicar de novo) - clicar de novo na opção marcada mantém ela marcada (grupo nunca fica vazio)", async ({ ltcatConfiguracoesPage: c }) => {
       for (const opcao of ORDENACOES) {
         await c.escolherOrdenacao(opcao)
         await c.escolherOrdenacao(opcao)
@@ -95,25 +96,24 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       }
     })
 
-    test("02c - mesma regra no fator de troca (q3 / q5)", async ({ ltcatConfiguracoesPage: c, page }) => {
-      const marcados = page.locator('mat-radio-group[formcontrolname="fatorTrocaRuido"] mat-radio-button.mat-radio-checked')
+    test("TST1095 (clicar de novo) - mesma regra no fator de troca (q3 / q5)", async ({ ltcatConfiguracoesPage: c }) => {
       for (const fator of ["q3", "q3", "q5", "q5", "q3"] as const) {
-        await c.fatorDeTroca(fator).locator("label").click()
+        await c.escolherFator(fator)
         await expect(c.fatorDeTroca(fator).locator("input")).toBeChecked()
-        await expect(marcados).toHaveCount(1)
+        await expect(c.fatoresMarcados).toHaveCount(1)
       }
     })
 
     // a ordem só aparece nos itens 6 e 7 do laudo gerado; o "Gerar laudo" não entrega arquivo conferível (ver referencias-configuracoes-gerais, 36-38)
-    test.fixme("03 - 'Código da área a que pertence' ordena os GHEs em árvore (hierarquia 1, 2 e 3) no laudo", async () => {})
-    test.fixme("04 - muitos GHEs agrupados por hierarquia continuam legíveis no laudo, sem quebra de layout", async () => {})
+    test.fixme("TST1050 - 'Código da área a que pertence' ordena os GHEs em árvore (hierarquia 1, 2 e 3) no laudo", async () => {})
+    test.fixme("TST1051 - muitos GHEs agrupados por hierarquia continuam legíveis no laudo, sem quebra de layout", async () => {})
   })
 
   test.describe("Exibir a descrição das atividades por", () => {
     for (const { titulo, cargo, ghe } of [
-      { titulo: "05 - só Cargo", cargo: true, ghe: false },
-      { titulo: "06 - só GHE", cargo: false, ghe: true },
-      { titulo: "07 - Cargo e GHE", cargo: true, ghe: true },
+      { titulo: "TST1052 - só Cargo", cargo: true, ghe: false },
+      { titulo: "TST1053 - só GHE", cargo: false, ghe: true },
+      { titulo: "TST1054 - Cargo e GHE", cargo: true, ghe: true },
     ]) {
       test(`${titulo}: salva e mantém ao reabrir`, async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
         // marca primeiro o que fica ligado: nunca passa pelo estado "nenhuma"
@@ -128,7 +128,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       })
     }
 
-    test("08 - salvar sem Cargo nem GHE é bloqueado com a mensagem de descrição obrigatória", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, toast, page }) => {
+    test("TST1055 - salvar sem Cargo nem GHE é bloqueado com a mensagem de descrição obrigatória", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, toast, page }) => {
       await c.definir("Cargo", false)
       await c.definir("GHE", false)
       await c.garantirFatorDeTroca()
@@ -137,16 +137,43 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       await toast.temTexto(MSG_DESCRICAO)
       await expect(page).not.toHaveURL(/idkey=/)
     })
+
+    test("TST1418 - Salvar sem Cargo nem GHE destaca as duas flags e exibe [descricao_atividade_obrigatoria]", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, toast, page }) => {
+      await c.definir("Cargo", false)
+      await c.definir("GHE", false)
+      await c.garantirFatorDeTroca()
+      await preencherReferencias(cadastro)
+      await cadastro.salvar()
+      await toast.temTexto(MSG_DESCRICAO)
+      for (const opcao of ["Cargo", "GHE"] as const) {
+        console.log(opcao, await c.opcao(opcao).evaluate((e) => ({ classe: e.className, cor: getComputedStyle(e.querySelector(".mat-checkbox-frame")!).borderColor, label: getComputedStyle(e.querySelector(".mat-checkbox-label")!).color })))
+      }
+      await expect(page).not.toHaveURL(/idkey=/)
+    })
+
+    test("TST1419 - Salvar sem Cargo nem GHE estando em outra aba leva para a aba Configurações", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, toast, page }) => {
+      await c.definir("Cargo", false)
+      await c.definir("GHE", false)
+      await c.garantirFatorDeTroca()
+      await cadastro.abrirAba("Referências")
+      await cadastro.preencherObrigatorios(DADOS)
+      await cadastro.abrirAba("Conclusão")
+      await cadastro.salvar()
+      await toast.temTexto(MSG_DESCRICAO)
+      await expect(cadastro.aba("Configurações")).toHaveAttribute("aria-selected", "true")
+      await expect(c.opcao("Cargo")).toBeVisible()
+      await expect(page).not.toHaveURL(/idkey=/)
+    })
   })
 
   test.describe("Incluir riscos associados às atividades do GHE", () => {
-    test("09 - com 'GHE' desmarcado fica desmarcado e bloqueado", async ({ ltcatConfiguracoesPage: c }) => {
+    test("TST1056 - com 'GHE' desmarcado fica desmarcado e bloqueado", async ({ ltcatConfiguracoesPage: c }) => {
       await c.definir("GHE", false)
       await expect(c.opcao(RISCOS).locator("input")).not.toBeChecked()
       await expect(c.opcao(RISCOS).locator("input")).toBeDisabled()
     })
 
-    test("10 - marcar 'GHE' desbloqueia o campo", async ({ ltcatConfiguracoesPage: c }) => {
+    test("TST1057 - marcar 'GHE' desbloqueia o campo", async ({ ltcatConfiguracoesPage: c }) => {
       await c.definir("GHE", false)
       await expect(c.opcao(RISCOS).locator("input")).toBeDisabled()
       await c.definir("GHE", true)
@@ -155,7 +182,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
 
     // GRO > Configurações > Configurações - GHE > Gerais é global do ambiente: o valor original volta no finally
     // ciclo num teste só (sem dois workers disputando o GRO), navegando pelo menu como o usuário faz, sem recarregar a página
-    test("11 - a flag acompanha a exibição da aba 'Atividades x Fatores de Risco' no GRO (Oculta esconde, Visível mostra)", async ({ menuLateral: menu, configGheAbaGeraisPage: gro, ltcatPage: lista, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1058 - a flag acompanha a exibição da aba 'Atividades x Fatores de Risco' no GRO (Oculta esconde, Visível mostra)", async ({ menuLateral: menu, configGheAbaGeraisPage: gro, ltcatPage: lista, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       test.setTimeout(480000)
       // durante a animação de rota a tela que sai e a que entra ficam juntas no DOM (dois "Região *")
       const telaUnica = () => expect(page.getByRole("combobox", { name: "Região *" })).toHaveCount(1, { timeout: 15000 })
@@ -163,7 +190,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
         const item = menu.item(/LTCAT/).locator("visible=true")
         if (!(await item.isVisible())) await menu.grupo("Programas e Laudos").click()
         await item.click()
-        const sair = page.getByRole("button", { name: "Sair sem salvar" })
+        const sair = cadastro.botaoConfirmacaoSaida("Sair sem salvar")
         await lista.titulo.or(sair).first().waitFor()
         if (await sair.isVisible()) await sair.click()
         await lista.titulo.waitFor()
@@ -214,7 +241,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
   })
 
   test.describe("Incluir fotos dos GHEs", () => {
-    test("12 - marcar e salvar mantém marcado ao recarregar", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1059 - marcar e salvar mantém marcado ao recarregar", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       // primeiro grava desmarcado, para o "marcar" ser uma mudança de verdade
       await c.definir("Incluir fotos dos GHEs", false)
       await c.garantirFatorDeTroca()
@@ -227,7 +254,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       await expect(c.opcao("Incluir fotos dos GHEs").locator("input")).toBeChecked()
     })
 
-    test("13 - desmarcar e salvar mantém desmarcado ao recarregar", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1060 - desmarcar e salvar mantém desmarcado ao recarregar", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       await c.definir("Incluir fotos dos GHEs", true)
       await c.garantirFatorDeTroca()
       await preencherReferencias(cadastro)
@@ -241,7 +268,6 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
   })
 
   // ---- 2ª leva de cenários da planilha ----
-  const aba = (page: Page) => page.locator("apollus-ngx-ivy-ltcat-aba-configuracoes")
   const primaria = (page: Page) => page.evaluate(() => {
     const hex = getComputedStyle(document.documentElement).getPropertyValue("--apls-default-primary-color").trim().slice(1)
     const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16))
@@ -249,7 +275,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
   })
 
   // cadastro novo: ajusta o que o teste quer, preenche as Referências, salva e recarrega na aba Configurações
-  async function gravarNovo({ cadastro, c, page }: { cadastro: LtcatCadastroPage; c: import("@support/actions/seguranca/programas-e-laudos/ltcat/LTCATConfiguracoes").LtcatConfiguracoesPage; page: Page }) {
+  const gravarNovo = async ({ cadastro, c, page }: { cadastro: LtcatCadastroPage; c: LtcatConfiguracoesPage; page: Page }) => {
     await c.garantirFatorDeTroca()
     await preencherReferencias(cadastro)
     await salvarERecarregar(cadastro, page)
@@ -257,35 +283,35 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
   }
 
   test.describe("Flags e valores default", () => {
-    // 14 - ignorado: exige base nova, sem parametrização na Configuração Geral (dúvida registrada no doc 09)
-    // test("14 - 'Considerar frequência para conclusão' vem marcada quando não há parametrização prévia", async () => {})
+    // TST1089 - ignorado: exige base nova, sem parametrização na Configuração Geral (dúvida registrada no doc 09)
+    // test("TST1089 - 'Considerar frequência para conclusão' vem marcada quando não há parametrização prévia", async () => {})
 
-    test("15 - marcar 'Incluir fichas de campo' e salvar mantém marcado", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1090 - marcar 'Incluir fichas de campo' e salvar mantém marcado", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       await c.definir("Incluir fichas de campo", false)
       await c.definir("Incluir fichas de campo", true)
       await gravarNovo({ cadastro, c, page })
       await expect(c.opcao("Incluir fichas de campo").locator("input")).toBeChecked()
     })
 
-    test("16 - não existe mais 'Incluir anexo de Relatório de Análise'", async ({ page }) => {
-      await expect(aba(page).getByText(/Relatório de Análise/i)).toHaveCount(0)
+    test("TST1091 - não existe mais 'Incluir anexo de Relatório de Análise'", async ({ ltcatConfiguracoesPage: c }) => {
+      await expect(c.aba.getByText(/Relatório de Análise/i)).toHaveCount(0)
     })
 
-    test("17 - sem rótulo, help ou checkbox órfão: todo componente tem texto", async ({ page }) => {
-      const vazios = await aba(page).locator("mat-checkbox, mat-radio-button").evaluateAll((els) =>
+    test("TST1092 - sem rótulo, help ou checkbox órfão: todo componente tem texto", async ({ ltcatConfiguracoesPage: c }) => {
+      const vazios = await c.aba.locator("mat-checkbox, mat-radio-button").evaluateAll((els) =>
         els.filter((e) => !(e.querySelector(".mat-checkbox-label, .mat-radio-label-content") as HTMLElement)?.innerText.replace("help_outline", "").trim()).length)
       expect(vazios).toBe(0)
-      await expect(aba(page).getByText(/Relat[óo]rio de An[áa]lise/i)).toHaveCount(0)
+      await expect(c.aba.getByText(/Relat[óo]rio de An[áa]lise/i)).toHaveCount(0)
     })
 
-    test("18 - marcar 'Sinalizar EPIs com CA vencido' e salvar mantém marcado", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1093 - marcar 'Sinalizar EPIs com CA vencido' e salvar mantém marcado", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       await c.definir("Sinalizar EPIs com CA vencido", false)
       await c.definir("Sinalizar EPIs com CA vencido", true)
       await gravarNovo({ cadastro, c, page })
       await expect(c.opcao("Sinalizar EPIs com CA vencido").locator("input")).toBeChecked()
     })
 
-    test("19 - 'Sinalizar EPIs com CA vencido': marcado usa a cor primária do tema na borda e no check", async ({ ltcatConfiguracoesPage: c, page }) => {
+    test("TST1094 - 'Sinalizar EPIs com CA vencido': marcado usa a cor primária do tema na borda e no check", async ({ ltcatConfiguracoesPage: c, page }) => {
       await c.definir("Sinalizar EPIs com CA vencido", false)
       const cb = c.opcao("Sinalizar EPIs com CA vencido")
       const cores = () => cb.evaluate((e) => ({
@@ -301,38 +327,37 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
 
   test.describe("Fator de troca (q3 / q5)", () => {
     // o radio não se desmarca pela tela, então "salvar sem nenhum" não é alcançável: confere que sempre há exatamente um marcado
-    test("20 - o fator de troca obrigatório sempre tem q3 ou q5 marcado", async ({ ltcatConfiguracoesPage: c, page }) => {
-      const marcados = page.locator('mat-radio-group[formcontrolname="fatorTrocaRuido"] mat-radio-button.mat-radio-checked')
-      await expect(marcados).toHaveCount(1)
-      await c.fatorDeTroca("q3").locator("label").click()
-      await c.fatorDeTroca("q3").locator("label").click()
-      await expect(marcados).toHaveCount(1)
+    test("TST1095 - o fator de troca obrigatório sempre tem q3 ou q5 marcado", async ({ ltcatConfiguracoesPage: c }) => {
+      await expect(c.fatoresMarcados).toHaveCount(1)
+      await c.escolherFator("q3")
+      await c.escolherFator("q3")
+      await expect(c.fatoresMarcados).toHaveCount(1)
     })
 
     for (const fator of ["q3", "q5"] as const) {
       const outro = fator === "q3" ? "q5" : "q3"
-      test(`${fator === "q3" ? 21 : 22} - selecionar ${fator} mantém só ${fator}`, async ({ ltcatConfiguracoesPage: c, page }) => {
-        await c.fatorDeTroca(fator).locator("label").click()
+      test(`${fator === "q3" ? "TST1096" : "TST1097"} - selecionar ${fator} mantém só ${fator}`, async ({ ltcatConfiguracoesPage: c }) => {
+        await c.escolherFator(fator)
         await expect(c.fatorDeTroca(fator).locator("input")).toBeChecked()
         await expect(c.fatorDeTroca(outro).locator("input")).not.toBeChecked()
-        await expect(page.locator('mat-radio-group[formcontrolname="fatorTrocaRuido"] mat-radio-button.mat-radio-checked')).toHaveCount(1)
+        await expect(c.fatoresMarcados).toHaveCount(1)
       })
     }
 
-    test("23 - alternar rapidamente entre q3 e q5 nunca deixa dois marcados", async ({ ltcatConfiguracoesPage: c, page }) => {
-      for (let i = 0; i < 6; i++) {
+    test("TST1098 - alternar rapidamente entre q3 e q5 nunca deixa dois marcados", async ({ ltcatConfiguracoesPage: c }) => {
+      await repetir(6, async () => {
         await c.fatorDeTroca("q3").locator("label").click({ delay: 0 })
         await c.fatorDeTroca("q5").locator("label").click({ delay: 0 })
-      }
+      })
       await expect(c.fatorDeTroca("q5").locator("input")).toBeChecked()
-      await expect(page.locator('mat-radio-group[formcontrolname="fatorTrocaRuido"] mat-radio-button.mat-radio-checked')).toHaveCount(1)
+      await expect(c.fatoresMarcados).toHaveCount(1)
     })
 
-    for (const [num, fator, outro] of [[24, "q3", "q5"], [25, "q5", "q3"]] as const) {
+    for (const [num, fator, outro] of [["TST1099", "q3", "q5"], ["TST1100", "q5", "q3"]] as const) {
       test(`${num} - ${fator} persiste após salvar e reabrir`, async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
         // sai do outro valor para a escolha ser uma mudança de verdade
-        await c.fatorDeTroca(outro).locator("label").click()
-        await c.fatorDeTroca(fator).locator("label").click()
+        await c.escolherFator(outro)
+        await c.escolherFator(fator)
         await gravarNovo({ cadastro, c, page })
         await expect(c.fatorDeTroca(fator).locator("input")).toBeChecked()
         await expect(c.fatorDeTroca(outro).locator("input")).not.toBeChecked()
@@ -343,9 +368,9 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
   // "marcado" = o item É considerado na conclusão (a planilha descreve o contrário; o rótulo e a EF dizem "Considerar na conclusão")
   test.describe("Considerar na conclusão", () => {
     for (const { num, titulo, epis, epcs } of [
-      { num: 26, titulo: "só EPIs", epis: true, epcs: false },
-      { num: 27, titulo: "só EPCs", epis: false, epcs: true },
-      { num: 28, titulo: "EPIs e EPCs juntos", epis: true, epcs: true },
+      { num: "TST1101", titulo: "só EPIs", epis: true, epcs: false },
+      { num: "TST1102", titulo: "só EPCs", epis: false, epcs: true },
+      { num: "TST1103", titulo: "EPIs e EPCs juntos", epis: true, epcs: true },
     ]) {
       test(`${num} - ${titulo}: salva e mantém ao reabrir`, async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
         await c.definir("EPIs", epis)
@@ -358,17 +383,17 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
   })
 
   test.describe("Layout e usabilidade", () => {
-    test("29 - nenhum componente sobrepõe outro", async ({ page }) => {
-      const caixas = await aba(page).locator("mat-checkbox, mat-radio-button").evaluateAll((els) =>
+    test("TST1104 - nenhum componente sobrepõe outro", async ({ ltcatConfiguracoesPage: c }) => {
+      const caixas = await c.aba.locator("mat-checkbox, mat-radio-button").evaluateAll((els) =>
         els.map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => ({ x: r.x, y: r.y, w: r.width, h: r.height })))
-      for (let i = 0; i < caixas.length; i++) for (let j = i + 1; j < caixas.length; j++) {
-        const [a, b] = [caixas[i], caixas[j]]
-        const sobrepoe = a.x < b.x + b.w - 1 && b.x < a.x + a.w - 1 && a.y < b.y + b.h - 1 && b.y < a.y + a.h - 1
-        expect(sobrepoe, `componentes ${i} e ${j}`).toBe(false)
-      }
+      type Caixa = (typeof caixas)[number]
+      const sobrepoe = (a: Caixa, b: Caixa) => a.x < b.x + b.w - 1 && b.x < a.x + a.w - 1 && a.y < b.y + b.h - 1 && b.y < a.y + a.h - 1
+      // todos os pares (i, j) com j > i que se sobrepõem
+      const sobrepostos = caixas.flatMap((a, i) => caixas.slice(i + 1).flatMap((b, k) => (sobrepoe(a, b) ? [`${i} e ${i + 1 + k}`] : [])))
+      expect(sobrepostos, "pares de componentes sobrepostos").toEqual([])
     })
 
-    test("30 - a rolagem alcança o último campo e volta ao topo", async ({ ltcatConfiguracoesPage: c, page }) => {
+    test("TST1105 - a rolagem alcança o último campo e volta ao topo", async ({ ltcatConfiguracoesPage: c, page }) => {
       const ultimo = c.opcao("EPCs")
       await ultimo.scrollIntoViewIfNeeded()
       await expect(ultimo).toBeInViewport()
@@ -377,7 +402,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       await expect(c.ordenacao("Código do GHE")).toBeInViewport()
     })
 
-    test("31 - em resolução reduzida os campos continuam acessíveis e sem rolagem horizontal", async ({ ltcatConfiguracoesPage: c, page }) => {
+    test("TST1106 - em resolução reduzida os campos continuam acessíveis e sem rolagem horizontal", async ({ ltcatConfiguracoesPage: c, page }) => {
       await page.setViewportSize({ width: 768, height: 900 })
       await expect(c.ordenacao("Código do GHE")).toBeVisible()
       await c.opcao("EPCs").scrollIntoViewIfNeeded()
@@ -388,7 +413,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
     // Textos da EF 5.3 (sem os trechos riscados). Onde a EF só difere em caixa/singular/crase do título da seção, vale a grafia da tela:
     // EF "Incluir foto dos GHEs", "Incluir risco das Categorias:", "Incluir GHEs sem Riscos (Descritivo)", "Incluir Ficha de Campo",
     // "Incluir Equipamentos de Medições", "(habitual/eventual)" e o help "junto as atividades" (sem crase)
-    test("32 - ortografia dos rótulos e helps conforme a EF 5.3", async ({ page }) => {
+    test("TST1107 - ortografia dos rótulos e helps conforme a EF 5.3", async ({ ltcatConfiguracoesPage: c, page }) => {
       const esperados = [
         "Listar os GHEs em ordem alfabética por:", "Código do GHE", "Código da área a que pertence", "Descrição do GHE", "Descrição da área a que pertence",
         "Exibir a descrição das atividades por:", "Cargo", "GHE", "Incluir fotos dos GHEs", "Incluir GHEs sem integrantes", "Incluir GHEs sem riscos",
@@ -400,7 +425,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
         "Incluir laudo da amostra", "Sinalizar EPIs com CA vencido", "Selecione o fator de troca que será considerado para as conclusões:", "q3", "q5",
         "Considerar na conclusão:", "EPIs", "EPCs",
       ]
-      const linhas = (await aba(page).innerText()).split("\n").map((l) => l.replace(/\*$/, "").trim())
+      const linhas = (await c.aba.innerText()).split("\n").map((l) => l.replace(/\*$/, "").trim())
         .filter((l) => l && l !== "help_outline" && l !== "auto_awesome")
       expect(linhas).toEqual(esperados)
 
@@ -410,37 +435,36 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
         "Se esta opção for marcada, junto às atividades do GHE serão listados os riscos associados, respectivamente, a cada descrição.",
         "Caso esta opção estiver marcada, no fluxo para gerar a conclusão somente serão considerados riscos com potencial de insalubridade identificados no GHE com severidade considerada como exposição habitual.",
       ]
-      const icones = aba(page).locator("mat-icon", { hasText: "help_outline" })
+      const icones = c.aba.locator("mat-icon", { hasText: "help_outline" })
       await expect(icones).toHaveCount(helps.length)
       const tooltip = page.locator("mat-tooltip-component")
-      for (let i = 0; i < helps.length; i++) {
+      for (const [i, texto] of helps.entries()) {
         await icones.nth(i).hover()
-        await expect(tooltip).toHaveText(helps[i])
+        await expect(tooltip).toHaveText(texto)
         await page.mouse.move(0, 0)
         await expect(tooltip).toHaveCount(0)
       }
     })
 
-    test("33 - checkboxes alinhados entre si em cada coluna", async ({ page }) => {
+    test("TST1108 - checkboxes alinhados entre si em cada coluna", async ({ ltcatConfiguracoesPage: c }) => {
       for (const coluna of [0, 1]) {
-        const xs = await aba(page).locator(`form > div > .col-6`).nth(coluna).locator("mat-checkbox.col-12 .mat-checkbox-inner-container")
+        const xs = await c.aba.locator(`form > div > .col-6`).nth(coluna).locator("mat-checkbox.col-12 .mat-checkbox-inner-container")
           .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().x)))
         expect(xs.length).toBeGreaterThan(1)
         expect(new Set(xs).size, `coluna ${coluna}: ${xs}`).toBe(1)
       }
     })
 
-    test("37 - fechar (Voltar) com alterações sem salvar alerta sobre alterações pendentes", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1112 - fechar (Voltar) com alterações sem salvar alerta sobre alterações pendentes", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c }) => {
       await c.definir("Incluir fotos dos GHEs", !(await c.opcao("Incluir fotos dos GHEs").locator("input").isChecked()))
       await cadastro.botaoVoltar.click()
-      // aviso "Atenção" (não é role=dialog): texto e botões conforme a tela
-      await expect(page.getByRole("heading", { name: "Atenção" })).toBeVisible()
-      await expect(page.getByText("Existem informações que não foram salvas.")).toBeVisible()
-      await expect(page.getByRole("button", { name: "Sair sem salvar" })).toBeVisible()
-      await expect(page.getByRole("button", { name: "Salvar e sair" })).toBeVisible()
+      await expect(cadastro.confirmacaoSaida.getByRole("heading", { name: "Atenção" })).toBeVisible()
+      await expect(cadastro.confirmacaoSaida).toContainText("Existem informações que não foram salvas.")
+      await expect(cadastro.botaoConfirmacaoSaida("Sair sem salvar")).toBeVisible()
+      await expect(cadastro.botaoConfirmacaoSaida("Salvar e sair")).toBeVisible()
     })
 
-    test("40 - a aba carrega em até 5 segundos", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c }) => {
+    test("TST1115 - a aba carrega em até 5 segundos", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c }) => {
       await cadastro.abrirAba("Referências")
       const inicio = Date.now()
       await cadastro.abrirAba("Configurações")
@@ -448,12 +472,10 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       expect(Date.now() - inicio).toBeLessThan(5000)
     })
 
-    test("41 - clicar no texto de cada flag habilitada marca/desmarca", async ({ ltcatConfiguracoesPage: c, page }) => {
-      const flags = aba(page).locator("mat-checkbox")
-      const total = await flags.count()
-      expect(total).toBeGreaterThan(20)
-      for (let i = 0; i < total; i++) {
-        const flag = flags.nth(i)
+    test("TST1116 - clicar no texto de cada flag habilitada marca/desmarca", async ({ ltcatConfiguracoesPage: c }) => {
+      const flags = await c.aba.locator("mat-checkbox").all()
+      expect(flags.length).toBeGreaterThan(20)
+      for (const flag of flags) {
         if (!(await flag.locator("input").isEnabled())) continue
         const antes = await flag.locator("input").isChecked()
         await flag.locator(".mat-checkbox-label").click()
@@ -462,7 +484,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       }
     })
 
-    test("42 - TAB percorre Cargo, GHE, fotos e GHEs sem integrantes nessa ordem", async ({ ltcatConfiguracoesPage: c }) => {
+    test("TST1117 - TAB percorre Cargo, GHE, fotos e GHEs sem integrantes nessa ordem", async ({ ltcatConfiguracoesPage: c }) => {
       await c.opcao("Cargo").locator("input").focus()
       await c.opcao("Cargo").locator("input").press("Tab")
       await expect(c.opcao("GHE").locator("input")).toBeFocused()
@@ -473,24 +495,22 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
     })
 
     // os radios obrigatórios (ordenação e fator de troca) nunca ficam vazios: vêm sempre com uma opção marcada, por isso a aba não usa o *
-    test("43 - radios obrigatórios sempre vêm preenchidos, mesmo depois de trocar a opção", async ({ ltcatConfiguracoesPage: c, page }) => {
-      const marcados = (grupo: string) => page.locator(`mat-radio-group[formcontrolname="${grupo}"] mat-radio-button.mat-radio-checked`)
-      await expect(marcados("ordenarGhesPor")).toHaveCount(1)
-      await expect(marcados("fatorTrocaRuido")).toHaveCount(1)
+    test("TST1118 - radios obrigatórios sempre vêm preenchidos, mesmo depois de trocar a opção", async ({ ltcatConfiguracoesPage: c }) => {
+      await expect(c.ordenacoesMarcadas).toHaveCount(1)
+      await expect(c.fatoresMarcados).toHaveCount(1)
       await c.escolherOrdenacao("Descrição do GHE")
       await c.escolherOrdenacao("Código do GHE")
-      await expect(marcados("ordenarGhesPor")).toHaveCount(1)
+      await expect(c.ordenacoesMarcadas).toHaveCount(1)
     })
 
-    // 45 - ignorado: sem mockup para comparar
-    // test("45 - tela segue o mockup aprovado", async () => {})
+    // TST1120 - ignorado: sem mockup para comparar
+    // test("TST1120 - tela segue o mockup aprovado", async () => {})
   })
 
   test.describe("Campos bloqueados (modo Bloquear)", () => {
-    test("34 - nenhum campo da aba aceita clique ou alteração", async ({ ltcatConfiguracoesPage: c, page }) => {
-      const entradas = aba(page).locator("input")
+    test("TST1109 - nenhum campo da aba aceita clique ou alteração", async ({ ltcatConfiguracoesPage: c }) => {
       // "Incluir GHEs sem riscos" não tem linha na Configuração Geral, então nunca é travado
-      const habilitadas = await entradas.evaluateAll((els) =>
+      const habilitadas = await c.aba.locator("input").evaluateAll((els) =>
         els.filter((e) => !(e as HTMLInputElement).disabled).filter((e) => e.closest("[formcontrolname]")?.getAttribute("formcontrolname") !== "incluirGhesSemRiscos").map((e) => `${e.closest("[formcontrolname]")?.getAttribute("formcontrolname") ?? e.id}:${(e as HTMLInputElement).type}`),
       )
       expect(habilitadas).toEqual([])
@@ -501,7 +521,7 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       await expect(c.ordenacao("Descrição do GHE").locator("input")).not.toBeChecked()
     })
 
-    test("35 - reabilitar o campo pela inspeção do navegador não persiste a alteração", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1110 - reabilitar o campo pela inspeção do navegador não persiste a alteração", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       const cargo = c.opcao("Cargo").locator("input")
       const original = await cargo.isChecked()
       await cargo.evaluate((e) => (e as HTMLInputElement).removeAttribute("disabled"))
@@ -513,13 +533,13 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
   })
 
   test.describe("Persistência e falhas", () => {
-    test("36 - várias alterações de uma vez são todas persistidas", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1111 - várias alterações de uma vez são todas persistidas", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       await c.definir("Incluir fotos dos GHEs", false)
       await c.definir("Incluir fichas de campo", true)
       await c.definir("Sinalizar EPIs com CA vencido", false)
       await c.definir("EPIs", true)
       await c.definir("EPCs", false)
-      await c.fatorDeTroca("q5").locator("label").click()
+      await c.escolherFator("q5")
       await c.escolherOrdenacao("Descrição do GHE")
       await gravarNovo({ cadastro, c, page })
       await expect(c.opcao("Incluir fotos dos GHEs").locator("input")).not.toBeChecked()
@@ -531,16 +551,16 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       await expect(c.ordenacao("Descrição do GHE").locator("input")).toBeChecked()
     })
 
-    // 38 - ignorado: exigiria duas sessões gravando o mesmo registro ao mesmo tempo
-    // test("38 - a mesma configuração aberta em dois navegadores não grava de forma inconsistente", async () => {})
+    // TST1113 - ignorado: exigiria duas sessões gravando o mesmo registro ao mesmo tempo
+    // test("TST1113 - a mesma configuração aberta em dois navegadores não grava de forma inconsistente", async () => {})
 
-    test("39 - sem conexão ao salvar mostra erro e nada é gravado", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1114 - sem conexão ao salvar mostra erro e nada é gravado", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, toast, page }) => {
       await c.garantirFatorDeTroca()
       await preencherReferencias(cadastro)
       await page.context().setOffline(true)
       try {
         await cadastro.salvar()
-        await expect(page.locator("apls-toast")).toBeVisible({ timeout: 15000 })
+        await expect(toast.mensagem.first()).toBeVisible({ timeout: 15000 })
         await expect(cadastro.mensagemSalvoComSucesso).toHaveCount(0)
         await expect(page).not.toHaveURL(/idkey=/)
       } finally {
@@ -548,9 +568,9 @@ test.describe("LTCAT - Aba Configurações - comportamento dos campos", () => {
       }
     })
 
-    test("44 - limpar o cache do navegador não perde o que foi salvo", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
+    test("TST1119 - limpar o cache do navegador não perde o que foi salvo", async ({ ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }) => {
       await c.definir("Incluir fichas de campo", true)
-      await c.fatorDeTroca("q5").locator("label").click()
+      await c.escolherFator("q5")
       await gravarNovo({ cadastro, c, page })
       const cdp = await page.context().newCDPSession(page)
       await cdp.send("Network.clearBrowserCache")

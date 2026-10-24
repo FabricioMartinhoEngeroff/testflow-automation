@@ -9,4 +9,5 @@ export const URLS = {
   profissional: "/apollus/seguranca/gro/cadastros/profissional",
   modeloDocumento: "/apollus/cadastro/gerais/modelo-documento",
   modeloDocumentoCadastro: "/apollus/cadastro/gerais/modelo-documento/cadastro",
+  grupoEmail: "/apollus/cadastro/gerais/grupo-email",
 } as const

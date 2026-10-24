@@ -101,6 +101,8 @@ export const semAlfa = (cor: string) => cor.replace(/^rgba?\((\d+),\s*(\d+),\s*(
 export const corDoTexto = (l: Locator) => l.evaluate((e) => getComputedStyle(e).color)
 
 export const excluirColaborador = async (page: Page, a: LtcatColaboradoresPage, linha = 0) => {
+  // depois de salvar o grid recarrega: contar antes disso dá 0 e o clique pode cair numa lista que vai ser redesenhada
+  await expect(a.linhasColaborador.first()).toBeVisible()
   const antes = await a.linhasColaborador.count()
   await a.botaoExcluir(linha).click()
   const popup = popupExclusao(page)

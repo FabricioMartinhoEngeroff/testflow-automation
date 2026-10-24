@@ -1,9 +1,11 @@
 // Aba Configurações do LTCAT herdando a tela "Configuração Geral": Sugerir = preenchido e editável, Bloquear = preenchido e travado.
 // A Configuração Geral vale para todos no ambiente, então este arquivo roda sozinho (project ltcat-config-geral) e devolve
 // os modos originais no fim de cada teste. Em 2026-10-20 a coluna LTCAT estava toda em Bloquear (aba com campos travados).
+import type { Page } from "@playwright/test"
 import { test, expect } from "@support"
-import type { LinhaConfig, Modo } from "@support/actions/seguranca/programas-e-laudos/ConfiguracaoGeral"
-import type { OpcaoConfiguracoes, OrdenacaoGhes, FatorTroca } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATConfiguracoes"
+import type { ConfiguracaoGeralPage, LinhaConfig, Modo } from "@support/actions/seguranca/programas-e-laudos/ConfiguracaoGeral"
+import type { LtcatCadastroPage } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro"
+import type { LtcatConfiguracoesPage, OpcaoConfiguracoes, OrdenacaoGhes, FatorTroca } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATConfiguracoes"
 import { URLS } from "@support/urls"
 import { ltcatValido } from "@support/data/ltcat"
 
@@ -35,13 +37,10 @@ test.describe("Aba Configurações x Configuração Geral", () => {
     await login.entrar()
   })
 
+  type Fixtures = { configuracaoGeralPage: ConfiguracaoGeralPage; ltcatCadastroPage: LtcatCadastroPage; ltcatConfiguracoesPage: LtcatConfiguracoesPage; page: Page }
+
   // aplica o modo em toda a coluna LTCAT, confere a aba e devolve os modos originais
-  async function conferirModo(modo: Modo, { configuracaoGeralPage: cg, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }: {
-    configuracaoGeralPage: import("@support/actions/seguranca/programas-e-laudos/ConfiguracaoGeral").ConfiguracaoGeralPage
-    ltcatCadastroPage: import("@support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro").LtcatCadastroPage
-    ltcatConfiguracoesPage: import("@support/actions/seguranca/programas-e-laudos/ltcat/LTCATConfiguracoes").LtcatConfiguracoesPage
-    page: import("@playwright/test").Page
-  }) {
+  const conferirModo = async (modo: Modo, { configuracaoGeralPage: cg, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c, page }: Fixtures) => {
     await cg.abrir()
     const original = await cg.lerLtcat()
     try {
@@ -52,19 +51,17 @@ test.describe("Aba Configurações x Configuração Geral", () => {
       await cadastro.abrir()
       await cadastro.selecionarOpcao(cadastro.regiao, ltcatValido.regiao)
       await cadastro.abrirAba("Configurações")
-      let conferidos = 0
-      for (const linha of salva) {
-        for (const controle of linha.modo ? controlesDaLinha(linha) : []) {
-          const alvo = controle.tipo === "checkbox" ? c.opcao(controle.opcao) : controle.ordenacao ? c.ordenacao(controle.ordenacao) : c.fatorDeTroca(controle.fator!)
-          const entrada = alvo.locator("input")
-          if (controle.tipo === "checkbox") await expect(entrada, linha.rotulo).toBeChecked({ checked: controle.marcado })
-          else await expect(entrada, linha.rotulo).toBeChecked()
-          if (modo === "Bloquear") await expect(entrada, linha.rotulo).toBeDisabled()
-          else await expect(entrada, linha.rotulo).toBeEnabled()
-          conferidos++
-        }
+      // cada linha com modo vira um ou mais controles da aba (as de hierarquia não viram nenhum)
+      const controles = salva.flatMap((linha) => (linha.modo ? controlesDaLinha(linha).map((controle) => ({ linha, controle })) : []))
+      for (const { linha, controle } of controles) {
+        const alvo = controle.tipo === "checkbox" ? c.opcao(controle.opcao) : controle.ordenacao ? c.ordenacao(controle.ordenacao) : c.fatorDeTroca(controle.fator!)
+        const entrada = alvo.locator("input")
+        if (controle.tipo === "checkbox") await expect(entrada, linha.rotulo).toBeChecked({ checked: controle.marcado })
+        else await expect(entrada, linha.rotulo).toBeChecked()
+        if (modo === "Bloquear") await expect(entrada, linha.rotulo).toBeDisabled()
+        else await expect(entrada, linha.rotulo).toBeEnabled()
       }
-      expect(conferidos).toBeGreaterThan(20)
+      expect(controles.length).toBeGreaterThan(20)
     } finally {
       await page.goto(URLS.ltcat)
       await cg.abrir()
@@ -73,18 +70,18 @@ test.describe("Aba Configurações x Configuração Geral", () => {
     }
   }
 
-  test("03 - modo Bloquear: campos preenchidos conforme a Configuração Geral e bloqueados", async ({ configuracaoGeralPage, ltcatCadastroPage, ltcatConfiguracoesPage, page }) => {
+  test("TST1045 - modo Bloquear: campos preenchidos conforme a Configuração Geral e bloqueados", async ({ configuracaoGeralPage, ltcatCadastroPage, ltcatConfiguracoesPage, page }) => {
     await conferirModo("Bloquear", { configuracaoGeralPage, ltcatCadastroPage, ltcatConfiguracoesPage, page })
   })
 
-  test("02 - modo Sugerir: campos preenchidos conforme a Configuração Geral e editáveis", async ({ configuracaoGeralPage, ltcatCadastroPage, ltcatConfiguracoesPage, page }) => {
+  test("TST1044 - modo Sugerir: campos preenchidos conforme a Configuração Geral e editáveis", async ({ configuracaoGeralPage, ltcatCadastroPage, ltcatConfiguracoesPage, page }) => {
     await conferirModo("Sugerir", { configuracaoGeralPage, ltcatCadastroPage, ltcatConfiguracoesPage, page })
   })
 
   // a tela não tem estado "sem configuração": Bloquear e Sugerir são exclusivos e uma das duas está sempre ativa em cada linha
-  test.fixme("01 - sem parametrização prévia a aba carrega os valores default da documentação", async () => {})
+  test.fixme("TST1043 - sem parametrização prévia a aba carrega os valores default da documentação", async () => {})
 
-  test("04 - radio 'Listar os GHEs em ordem alfabética por' vem marcado com o valor da Configuração Geral", async ({ configuracaoGeralPage: cg, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c }) => {
+  test("TST1046 (Configuração Geral) - radio 'Listar os GHEs em ordem alfabética por' vem marcado com o valor da Configuração Geral", async ({ configuracaoGeralPage: cg, ltcatCadastroPage: cadastro, ltcatConfiguracoesPage: c }) => {
     await cg.abrir()
     const linha = (await cg.lerLtcat()).find((l) => l.rotulo.startsWith("Listar os GHEs"))!
     await cadastro.abrir()

@@ -12,20 +12,20 @@ test.describe("LTCAT - Referências - Condições operacionais", () => {
   })
 
   test.describe("Estado inicial", () => {
-    test("01 - exibido em branco e habilitado no novo cadastro", async ({ ltcatReferenciasPage: r }) => {
+    test("TST871 - exibido em branco e habilitado no novo cadastro", async ({ ltcatReferenciasPage: r }) => {
       await expect(r.condicoesOperacionais).toBeVisible()
       await expect(r.condicoesOperacionais).toBeEditable()
       await expect(r.condicoesOperacionais).toHaveValue("")
     })
 
-    test("02 - é um campo descritivo com limite de 1000 caracteres", async ({ ltcatReferenciasPage: r }) => {
+    test("TST855 (maxlength) - é um campo descritivo com limite de 1000 caracteres", async ({ ltcatReferenciasPage: r }) => {
       await expect(r.condicoesOperacionais).toHaveJSProperty("tagName", "TEXTAREA")
       await expect(r.condicoesOperacionais).toHaveAttribute("maxlength", "1000")
     })
   })
 
   test.describe("Obrigatoriedade", () => {
-    test("03 - label com asterisco e destaque vermelho ao sair do campo vazio", async ({ ltcatReferenciasPage: r }) => {
+    test("TST872 - label com asterisco e destaque vermelho ao sair do campo vazio", async ({ ltcatReferenciasPage: r }) => {
       await expect(r.condicoesOperacionais).toHaveAttribute("aria-required", "true")
       await expect(r.labelCondicoesOperacionais.locator(".mat-form-field-required-marker")).toHaveText("*")
 
@@ -34,7 +34,7 @@ test.describe("LTCAT - Referências - Condições operacionais", () => {
       await expect(r.campoCondicoesOperacionais).toHaveClass(/mat-form-field-invalid/)
     })
 
-    test("04 - salvar sem preencher é bloqueado com a mensagem de obrigatório", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast, page }) => {
+    test("TST853/TST869 - salvar sem preencher é bloqueado com a mensagem de obrigatório", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, toast, page }) => {
       await cadastro.preencherObrigatorios()
       await cadastro.preencherConfiguracoesObrigatorias()
       await r.condicoesOperacionais.fill("")
@@ -48,22 +48,22 @@ test.describe("LTCAT - Referências - Condições operacionais", () => {
 
   test.describe("Conteúdo aceito", () => {
     const aceitos = [
-      { titulo: "05 - letras e números", valor: "Turno 1 - jornada de 8h com 2 pausas" },
-      { titulo: "06 - caracteres especiais", valor: "#@!%&*()/-_;:,.?" },
-      { titulo: "07 - caixa alta", valor: "OPERAÇÃO CONTÍNUA EM REGIME DE TURNOS" },
-      { titulo: "08 - caixa baixa", valor: "operação contínua em regime de turnos" },
-      { titulo: "09 - acentos e cedilha", valor: "Área de produção, seção elétrica e manutenção" },
-      { titulo: "10 - espaços entre palavras e consecutivos", valor: "linha   de    produção" },
+      { titulo: "TST846 - letras e números", valor: "Turno 1 - jornada de 8h com 2 pausas" },
+      { titulo: "TST848 - caracteres especiais", valor: "#@!%&*()/-_;:,.?" },
+      { titulo: "TST847 (caixa alta) - caixa alta", valor: "OPERAÇÃO CONTÍNUA EM REGIME DE TURNOS" },
+      { titulo: "TST847 (caixa baixa) - caixa baixa", valor: "operação contínua em regime de turnos" },
+      { titulo: "TST863 - acentos e cedilha", valor: "Área de produção, seção elétrica e manutenção" },
+      { titulo: "TST849 - espaços entre palavras e consecutivos", valor: "linha   de    produção" },
     ]
     for (const { titulo, valor } of aceitos) {
-      test(titulo, async ({ ltcatReferenciasPage: r, page }) => {
+      test(titulo, async ({ ltcatReferenciasPage: r, toast }) => {
         await r.condicoesOperacionais.pressSequentially(valor)
         await expect(r.condicoesOperacionais).toHaveValue(valor)
-        await expect(page.locator("apls-toast")).toHaveCount(0)
+        await expect(toast.mensagem).toHaveCount(0)
       })
     }
 
-    test("11 - aceita colar texto, mantendo as quebras de linha", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST850/TST851 - aceita colar texto, mantendo as quebras de linha", async ({ ltcatReferenciasPage: r, page }) => {
       await r.condicoesOperacionais.click()
       await page.keyboard.insertText("Turno A: 06h às 14h\nTurno B: 14h às 22h")
       await expect(r.condicoesOperacionais).toHaveValue("Turno A: 06h às 14h\nTurno B: 14h às 22h")
@@ -71,14 +71,14 @@ test.describe("LTCAT - Referências - Condições operacionais", () => {
   })
 
   test.describe("Limite de 1000 caracteres", () => {
-    test("12 - aceita exatamente 1000 caracteres", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST855 - aceita exatamente 1000 caracteres", async ({ ltcatReferenciasPage: r, page }) => {
       expect(MIL).toHaveLength(1000)
       await r.condicoesOperacionais.click()
       await page.keyboard.insertText(MIL)
       await expect(r.condicoesOperacionais).toHaveValue(MIL)
     })
 
-    test("13 - digitando o 1001º caractere, ele é bloqueado", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST856 - digitando o 1001º caractere, ele é bloqueado", async ({ ltcatReferenciasPage: r, page }) => {
       await r.condicoesOperacionais.click()
       await page.keyboard.insertText(MIL)
       await r.condicoesOperacionais.press("End")
@@ -86,20 +86,20 @@ test.describe("LTCAT - Referências - Condições operacionais", () => {
       await expect(r.condicoesOperacionais).toHaveValue(MIL)
     })
 
-    test("14 - colando mais de 1000, trunca no 1000º caractere", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST882 - colando mais de 1000, trunca no 1000º caractere", async ({ ltcatReferenciasPage: r, page }) => {
       await r.condicoesOperacionais.click()
       await page.keyboard.insertText(MIL + "EXCEDENTE")
       await expect(r.condicoesOperacionais).toHaveValue(MIL)
     })
 
-    test("15 - texto no limite não quebra o layout da página", async ({ ltcatReferenciasPage: r, page }) => {
+    test("TST864 - texto no limite não quebra o layout da página", async ({ ltcatReferenciasPage: r, page }) => {
       await r.condicoesOperacionais.click()
       await page.keyboard.insertText(MIL)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     })
   })
 
-  test("16 - refresh sem salvar volta o campo para branco", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+  test("TST876 (refresh) - refresh sem salvar volta o campo para branco", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
     await r.condicoesOperacionais.pressSequentially("Condições não salvas")
     await page.reload()
     await cadastro.titulo.waitFor()
@@ -107,7 +107,7 @@ test.describe("LTCAT - Referências - Condições operacionais", () => {
   })
 
   // cria 1 LTCAT novo no ambiente de homologação a cada execução (sem rollback)
-  test("17 - salva, persiste após reload e grava a edição", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
+  test("TST858/TST859/TST861 - salva, persiste após reload e grava a edição", async ({ ltcatCadastroPage: cadastro, ltcatReferenciasPage: r, page }) => {
     test.setTimeout(150000)
     const inicial = "Turno A: 06h às 14h\nTurno B: 14h às 22h"
     await cadastro.preencherObrigatorios({ ...ltcatValido, condicoesOperacionais: inicial })

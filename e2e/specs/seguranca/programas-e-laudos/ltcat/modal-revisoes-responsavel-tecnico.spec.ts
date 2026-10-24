@@ -15,14 +15,14 @@ test.describe("LTCAT - Modal Histórico de revisões - Responsável técnico", (
     await modal.abrir()
   })
 
-  test("01 - campo em branco, habilitado e marcado como obrigatório", async ({ ltcatHistoricoRevisoesModal: m }) => {
+  test("TST308 - campo em branco, habilitado e marcado como obrigatório", async ({ ltcatHistoricoRevisoesModal: m }) => {
     await expect(m.responsavelTecnico).toHaveValue("")
     await expect(m.responsavelTecnico).toBeEnabled()
     await expect(m.responsavelTecnico).toHaveAttribute("aria-autocomplete", "list")
     await expect(m.campoResponsavelTecnico.locator(".mat-form-field-required-marker")).toHaveText("*")
   })
 
-  test("02 - catálogo no formato CPF + nome + registro e ordenado pelo nome", async ({ ltcatHistoricoRevisoesModal: m }) => {
+  test("TST311/TST336 - catálogo no formato CPF + nome + registro e ordenado pelo nome", async ({ ltcatHistoricoRevisoesModal: m }) => {
     await m.responsavelTecnico.click()
     await expect(m.opcoesResponsavel.first()).toBeVisible()
     const opcoes = (await m.opcoesResponsavel.allInnerTexts()).map((o) => o.trim())
@@ -32,7 +32,7 @@ test.describe("LTCAT - Modal Histórico de revisões - Responsável técnico", (
     expect(nomes).toEqual([...nomes].sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" })))
   })
 
-  test("03 - catálogo é o mesmo da aba Referências", async ({ ltcatHistoricoRevisoesModal: m, ltcatReferenciasPage: r, page }) => {
+  test("TST322/TST323 (mesmo catálogo das Referências) - catálogo é o mesmo da aba Referências", async ({ ltcatHistoricoRevisoesModal: m, ltcatReferenciasPage: r, page }) => {
     await m.responsavelTecnico.click()
     await expect(m.opcoesResponsavel.first()).toBeVisible()
     const doModal = await m.opcoesResponsavel.allInnerTexts()
@@ -46,11 +46,11 @@ test.describe("LTCAT - Modal Histórico de revisões - Responsável técnico", (
 
   test.describe("Pesquisa", () => {
     const casos = [
-      { titulo: "04 - por CPF completo", termo: "834.396.010-64", esperado: [MARIA_ALICE] },
-      { titulo: "05 - por CPF parcial", termo: "834.396", esperado: [MARIA_ALICE] },
-      { titulo: "06 - ignora acentos", termo: "Ataide", esperado: [ATAIDE] },
-      { titulo: "07 - por registro do conselho", termo: "CRM25636-9", contem: MARIA_ALICE },
-      { titulo: "08 - por nome, ignorando maiúsculas", termo: "MARIA ALICE", contem: MARIA_ALICE },
+      { titulo: "TST313 - por CPF completo", termo: "834.396.010-64", esperado: [MARIA_ALICE] },
+      { titulo: "TST313 (parcial) - por CPF parcial", termo: "834.396", esperado: [MARIA_ALICE] },
+      { titulo: "TST339 - ignora acentos", termo: "Ataide", esperado: [ATAIDE] },
+      { titulo: "TST312 (registro do conselho) - por registro do conselho", termo: "CRM25636-9", contem: MARIA_ALICE },
+      { titulo: "TST312 - por nome, ignorando maiúsculas", termo: "MARIA ALICE", contem: MARIA_ALICE },
     ]
 
     for (const caso of casos) {
@@ -67,20 +67,20 @@ test.describe("LTCAT - Modal Histórico de revisões - Responsável técnico", (
       })
     }
 
-    test("09 - termo inexistente mostra lista vazia sem erro", async ({ ltcatHistoricoRevisoesModal: m, page }) => {
+    test("TST314 - termo inexistente mostra lista vazia sem erro", async ({ ltcatHistoricoRevisoesModal: m, toast }) => {
       await m.pesquisarResponsavel("zzzzqq")
       await expect(m.opcoesResponsavel).toHaveText(["Nenhum registro encontrado."])
-      await expect(page.locator("apls-toast")).toHaveCount(0)
+      await expect(toast.mensagem).toHaveCount(0)
     })
   })
 
   test.describe("Seleção e botão Limpar", () => {
-    test("10 - selecionar preenche o campo com a opção escolhida", async ({ ltcatHistoricoRevisoesModal: m }) => {
+    test("TST316 - selecionar preenche o campo com a opção escolhida", async ({ ltcatHistoricoRevisoesModal: m }) => {
       await m.escolherResponsavel(ATAIDE)
       await expect(m.responsavelTecnico).toHaveValue(ATAIDE)
     })
 
-    test("10b - seleciona pelo teclado (setas + ENTER)", async ({ ltcatHistoricoRevisoesModal: m }) => {
+    test("TST341 - seleciona pelo teclado (setas + ENTER)", async ({ ltcatHistoricoRevisoesModal: m }) => {
       await m.responsavelTecnico.focus()
       await m.responsavelTecnico.press("ArrowDown")
       await expect(m.opcoesResponsavel.first()).toBeVisible()
@@ -89,7 +89,7 @@ test.describe("LTCAT - Modal Histórico de revisões - Responsável técnico", (
       await expect(m.responsavelTecnico).toHaveValue(FORMATO_OPCAO)
     })
 
-    test("11 - X aparece ao focar o campo e tem tooltip 'Limpar'", async ({ ltcatHistoricoRevisoesModal: m, page }) => {
+    test("TST317 (botão Limpar) - X aparece ao focar o campo e tem tooltip 'Limpar'", async ({ ltcatHistoricoRevisoesModal: m, page }) => {
       await expect(m.botaoLimparResponsavel).toHaveCount(0)
       await m.responsavelTecnico.click()
       await expect(m.botaoLimparResponsavel).toBeVisible()
@@ -97,7 +97,7 @@ test.describe("LTCAT - Modal Histórico de revisões - Responsável técnico", (
       await expect(page.locator(`#${tooltipId}`)).toHaveText("Limpar")
     })
 
-    test("12 - Limpar deixa o campo em branco e permite escolher outro", async ({ ltcatHistoricoRevisoesModal: m }) => {
+    test("TST317 - Limpar deixa o campo em branco e permite escolher outro", async ({ ltcatHistoricoRevisoesModal: m }) => {
       await m.escolherResponsavel(MARIA_ALICE)
       await m.limparResponsavel()
       await expect(m.responsavelTecnico).toHaveValue("")
@@ -105,13 +105,13 @@ test.describe("LTCAT - Modal Histórico de revisões - Responsável técnico", (
       await expect(m.responsavelTecnico).toHaveValue(ATAIDE)
     })
 
-    test("13 - depois de Limpar, Adicionar é bloqueado pela obrigatoriedade", async ({ ltcatHistoricoRevisoesModal: m, page }) => {
+    test("TST318 - depois de Limpar, Adicionar é bloqueado pela obrigatoriedade", async ({ ltcatHistoricoRevisoesModal: m, toast, page }) => {
       await m.preencher({ versao: "1", motivo: "Motivo 1", responsavel: ATAIDE })
       await m.limparResponsavel()
       // o X deixa a lista aberta por cima do "+"
       await page.keyboard.press("Escape")
       await m.botaoIncluirNaTabela.click()
-      await expect(page.locator("apls-toast")).toContainText("obrigatórios")
+      await toast.temTexto("obrigatórios")
       await expect(m.linhas).toHaveCount(0)
     })
   })

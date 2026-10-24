@@ -5,6 +5,8 @@ import { expect } from "@playwright/test"
 import type { LtcatAnexosPage } from "./LTCATAnexos"
 import type { LtcatAnexoModal } from "./LTCATAnexoModal"
 import type { LtcatCadastroPage } from "./LTCATCadastro"
+import { ToastPage } from "../../../Toast"
+import { repetir } from "@support/utils/repetir"
 
 export const arquivoDeTeste = (nome: string) => path.join(process.cwd(), "support", "arquivos", nome)
 
@@ -15,11 +17,10 @@ export const MSG_ANEXOS = {
   excluido: /Registro excluído com sucesso|Operação realizada com sucesso/,
 }
 
-export const avisoAnexos = (page: Page, texto: string | RegExp) =>
-  expect(page.locator("apls-toast").filter({ hasText: texto }).first()).toBeVisible()
+export const avisoAnexos = (page: Page, texto: string | RegExp) => new ToastPage(page).temTexto(texto)
 
 // o toast [info_salvar] some rápido e às vezes não é capturado; o que vale aqui é o anexo entrar no grid
-export const incluirAnexo = async (_page: Page, a: LtcatAnexosPage, m: LtcatAnexoModal, descricao: string, arq = "minimo.pdf") => {
+export const incluirAnexo = async (a: LtcatAnexosPage, m: LtcatAnexoModal, descricao: string, arq = "minimo.pdf") => {
   const antes = await a.linhasAnexo.count()
   await a.abrirModalAdicionar()
   await m.anexar(arquivoDeTeste(arq))
@@ -42,7 +43,7 @@ export const abrirEdicaoAnexo = async (a: LtcatAnexosPage, m: LtcatAnexoModal, l
 
 export const excluirAnexo = async (a: LtcatAnexosPage, linha: number) => {
   await a.botaoExcluir(linha).click()
-  await a.popupExclusao.getByRole("button", { name: "Excluir" }).click()
+  await a.botaoPopupExclusao("Excluir").click()
   await expect(a.popupExclusao).toHaveCount(0)
 }
 
@@ -90,10 +91,10 @@ export const arrastarAnexo = async (page: Page, a: LtcatAnexosPage, de: number, 
   await page.mouse.move(x, y0)
   await page.mouse.down()
   const passos = 30
-  for (let i = 1; i <= passos; i++) {
-    await page.mouse.move(x, y0 + ((y1 - y0) * i) / passos)
+  await repetir(passos, async (vez) => {
+    await page.mouse.move(x, y0 + ((y1 - y0) * (vez + 1)) / passos)
     await page.waitForTimeout(25)
-  }
+  })
   await page.waitForTimeout(200)
   await page.mouse.up()
   // espera a animação do CDK e tira o mouse de cima do "Ordenar" (o tooltip atrapalha o próximo clique)

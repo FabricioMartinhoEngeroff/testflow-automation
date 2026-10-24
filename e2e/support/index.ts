@@ -15,6 +15,7 @@ import { LtcatEquipeModal } from "./actions/seguranca/programas-e-laudos/ltcat/L
 import { LtcatConclusaoPage } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATConclusao"
 import { LtcatHistoricoRevisoesModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATHistoricoRevisoes"
 import { LtcatNotificacoesModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATNotificacoes"
+import { LtcatDadosAssinaturaModal, LtcatAssinaturaModal } from "./actions/seguranca/programas-e-laudos/ltcat/LTCATDadosAssinatura"
 import { ProfissionalPage } from "./actions/seguranca/gro/profissional/Profissional"
 import { ConfigGheAbaGeraisPage } from "./actions/seguranca/gro/configuracoes/ConfigGheAbaGerais"
 import { ToastPage } from "./actions/Toast"
@@ -24,6 +25,7 @@ import { RevisorPage } from "./actions/Revisor"
 import { RelatoriosPage } from "./actions/Relatorios"
 import { ConfiguracaoGeralPage } from "./actions/seguranca/programas-e-laudos/ConfiguracaoGeral"
 import { ModeloDocumentoPage } from "./actions/cadastros-auxiliares/gerais/modelos-de-documento/ModeloDocumento"
+import { GrupoEmailPage } from "./actions/cadastros-auxiliares/gerais/grupos-de-email/GrupoEmail"
 
 // PERMISSÕES (desativado):
 // // segundo usuário (PGR_USUARIO_PERFIL), em contexto próprio: o `page` normal fica
@@ -47,12 +49,15 @@ type Pages = {
   ltcatConclusaoPage: LtcatConclusaoPage
   ltcatHistoricoRevisoesModal: LtcatHistoricoRevisoesModal
   ltcatNotificacoesModal: LtcatNotificacoesModal
+  ltcatDadosAssinaturaModal: LtcatDadosAssinaturaModal
+  ltcatAssinaturaModal: LtcatAssinaturaModal
   toast: ToastPage
   menuLateral: MenuLateralPage
   idioma: IdiomaPage
   revisor: RevisorPage
   relatorios: RelatoriosPage
   modeloDocumentoPage: ModeloDocumentoPage
+  grupoEmailPage: GrupoEmailPage
   configuracaoGeralPage: ConfiguracaoGeralPage
   configGheAbaGeraisPage: ConfigGheAbaGeraisPage
 }
@@ -121,6 +126,12 @@ export const test = base.extend<Pages>({
   ltcatNotificacoesModal: async ({ page }, use) => {
     await use(new LtcatNotificacoesModal(page))
   },
+  ltcatDadosAssinaturaModal: async ({ page }, use) => {
+    await use(new LtcatDadosAssinaturaModal(page))
+  },
+  ltcatAssinaturaModal: async ({ page }, use) => {
+    await use(new LtcatAssinaturaModal(page))
+  },
   toast: async ({ page }, use) => {
     await use(new ToastPage(page))
   },
@@ -141,6 +152,9 @@ export const test = base.extend<Pages>({
   },
   modeloDocumentoPage: async ({ page }, use) => {
     await use(new ModeloDocumentoPage(page))
+  },
+  grupoEmailPage: async ({ page }, use) => {
+    await use(new GrupoEmailPage(page))
   },
   configuracaoGeralPage: async ({ page }, use) => {
     await use(new ConfiguracaoGeralPage(page, new MenuLateralPage(page)))

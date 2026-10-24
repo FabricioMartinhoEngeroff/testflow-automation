@@ -38,6 +38,10 @@ export type FatorTroca = "q3" | "q5"
 export class LtcatConfiguracoesPage {
   constructor(private readonly page: Page) {}
 
+  get aba() {
+    return this.page.locator("apollus-ngx-ivy-ltcat-aba-configuracoes")
+  }
+
   opcao(texto: OpcaoConfiguracoes) {
     return matCheckbox(this.page, texto)
   }
@@ -83,11 +87,20 @@ export class LtcatConfiguracoesPage {
   // cadastro novo sem fator escolhido é barrado no Salvar; com a Configuração Geral em Sugerir ele já vem marcado
   async garantirFatorDeTroca(fator: FatorTroca = "q5") {
     const marcado = (f: FatorTroca) => this.fatorDeTroca(f).locator("input").isChecked()
-    if (!(await marcado("q3")) && !(await marcado("q5"))) await this.fatorDeTroca(fator).locator("label").click()
+    if (!(await marcado("q3")) && !(await marcado("q5"))) await this.escolherFator(fator)
   }
 
   fatorDeTroca(fator: FatorTroca) {
     return matRadio(this.page, fator)
+  }
+
+  // clica no rótulo, como na ordenação
+  async escolherFator(fator: FatorTroca) {
+    await this.fatorDeTroca(fator).locator("label").click()
+  }
+
+  get fatoresMarcados() {
+    return this.page.locator('mat-radio-group[formcontrolname="fatorTrocaRuido"] mat-radio-button.mat-radio-checked')
   }
 
   get descritivoGhesSemRiscos() {

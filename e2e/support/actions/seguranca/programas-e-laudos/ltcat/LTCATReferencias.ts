@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import { matCheckbox } from "@support/utils/material"
 
 export type OpcaoReferencias =
@@ -68,8 +68,9 @@ export class LtcatReferenciasPage {
     return this.page.locator("apollus-ngx-ivy-ltcat-equipe")
   }
 
+  // pelo tooltip e não pelo nome do ícone: em 2026-10-24 ele trocou de info_outline para help_outline
   get helpEquipe() {
-    return this.secaoEquipe.locator("mat-icon", { hasText: "info_outline" })
+    return this.secaoEquipe.locator(".apls-customizable-table-header mat-icon.mat-tooltip-trigger")
   }
 
   get linhasEquipe() {
@@ -89,8 +90,22 @@ export class LtcatReferenciasPage {
     return this.page.locator("apls-popup").filter({ hasText: "Deseja realmente excluir este item?" })
   }
 
+  botaoPopupExclusao(nome: "Excluir" | "Fechar") {
+    return this.popupExclusao.getByRole("button", { name: nome })
+  }
+
+  // lixeira da linha + confirmar no popup
+  async excluirMembroEquipe(linha: number) {
+    await this.botaoExcluirEquipe(linha).click()
+    await this.botaoPopupExclusao("Excluir").click()
+  }
+
   get art() {
     return this.aba.getByRole("textbox", { name: "ART" })
+  }
+
+  get campoArt() {
+    return this.aba.locator("apls-input[formcontrolname=art] mat-form-field")
   }
 
   get avaliacaoRealizadaEm() {
@@ -170,6 +185,11 @@ export class LtcatReferenciasPage {
     return this.aba.getByRole("textbox", { name: "Total de expostos" })
   }
 
+  // moldura do campo (label, asterisco e ícone de help)
+  campoExpostos(campo: "expostosMulheres" | "expostosHomens" | "expostosPcds") {
+    return this.aba.locator(`apls-input[formcontrolname=${campo}] mat-form-field`)
+  }
+
   opcao(texto: OpcaoReferencias) {
     return matCheckbox(this.page, texto)
   }
@@ -179,7 +199,7 @@ export class LtcatReferenciasPage {
     await this.opcao(texto).locator("label").click()
   }
 
-  async selecionarOpcao(campo: ReturnType<Page["getByRole"]>, opcao: string | RegExp) {
+  async selecionarOpcao(campo: Locator, opcao: string | RegExp) {
     await campo.click()
     await this.page.getByRole("option", { name: opcao }).first().click()
   }

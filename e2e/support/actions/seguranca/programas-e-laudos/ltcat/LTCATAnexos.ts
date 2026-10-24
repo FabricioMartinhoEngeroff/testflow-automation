@@ -44,11 +44,13 @@ export class LtcatAnexosPage {
     return this.linhasAnexo.nth(linha).locator("mat-icon", { hasText: "delete_outline" })
   }
 
+  // não é role=dialog: é o apls-popup padrão do Apollus (Fechar / Excluir)
   get popupExclusao() {
-    // o texto não fica dentro de um dialog com role: sobe até o ancestral mais próximo que tem o botão Excluir
-    return this.page
-      .getByText("Deseja realmente excluir este item?")
-      .locator("xpath=ancestor::*[.//button[normalize-space()=\"Excluir\"]][1]")
+    return this.page.locator("apls-popup").filter({ hasText: "Deseja realmente excluir este item?" })
+  }
+
+  botaoPopupExclusao(nome: "Excluir" | "Fechar") {
+    return this.popupExclusao.getByRole("button", { name: nome })
   }
 
   // por CSS: com uma modal aberta o fundo fica aria-hidden e getByRole não enxerga a tabela

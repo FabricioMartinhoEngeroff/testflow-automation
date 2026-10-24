@@ -5,10 +5,10 @@ import { env } from "@shared/env"
 const edge = { ...devices["Desktop Edge"], channel: "msedge" }
 
 export default defineConfig({
-  // roda um cenário de cada vez — evita dois testes mexendo no mesmo
-  // registro/tela real do Apollus ao mesmo tempo e colidindo
-  fullyParallel: false,
-  workers: 1,
+  // os testes são escritos para rodar em paralelo (dados próprios por teste);
+  // workers: 1 é só o limite desta máquina — em outra, suba com WORKERS=4 ou --workers=4
+  fullyParallel: true,
+  workers: process.env.WORKERS ? Number(process.env.WORKERS) : 1,
   // 1 retry: o ambiente é real e compartilhado, então falha de rede/lentidão pontual não derruba o teste
   // (e é o que faz o trace "on-first-retry" gravar)
   retries: 1,
@@ -49,6 +49,7 @@ export default defineConfig({
       testMatch: ["configuracoes-reflexo-config-geral.spec.ts", "configuracoes-comportamento.spec.ts"],
       // roda por último: mexe na Configuração Geral do ambiente todo, então espera todos os outros projetos
       dependencies: ["login", "ltcat", "ltcat-permissoes", "pgr", "profissional", "modelos-de-documento", "perfis-de-acesso"],
+      fullyParallel: false,
       timeout: 240000,
       use: { ...edge },
     },

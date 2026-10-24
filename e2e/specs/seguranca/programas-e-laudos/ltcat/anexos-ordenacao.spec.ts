@@ -10,6 +10,7 @@ import {
   nomesDeAnexo as nomes,
   salvarLtcat,
 } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATAnexosFluxos"
+import { repetir } from "@support/utils/repetir"
 
 test.describe("LTCAT - Anexos - Ordenação", () => {
   test.beforeEach(async ({ login, ltcatCadastroPage }) => {
@@ -51,7 +52,7 @@ test.describe("LTCAT - Anexos - Ordenação", () => {
     }
   })
 
-  test("TST1206 - reordenar rápido várias linhas não quebra nem perde itens", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
+  test("TST1206 - reordenar rápido várias linhas não quebra nem perde itens", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, toast, page }) => {
     test.setTimeout(240000)
     const inicial = nomes(8)
     await incluirAnexosEmLote(page, a, m, inicial)
@@ -61,7 +62,7 @@ test.describe("LTCAT - Anexos - Ordenação", () => {
     await expect(a.linhasAnexo).toHaveCount(inicial.length)
     const final = await a.descricoes()
     expect([...final].sort()).toEqual(inicial)
-    await expect(page.locator("apls-toast")).toHaveCount(0)
+    await expect(toast.mensagem).toHaveCount(0)
   })
 
   test("TST1208 - reordenar com 100 anexos mantém a ordem correta e a performance", async ({ ltcatAnexosPage: a, ltcatAnexoModal: m, page }) => {
@@ -101,15 +102,15 @@ test.describe("LTCAT - Anexos - Ordenação", () => {
 
     await page.mouse.move(x, origem.y + origem.height / 2)
     await page.mouse.down()
-    for (let i = 1; i <= 30; i++) {
-      await page.mouse.move(x, origem.y + ((yTopo - origem.y) * i) / 30)
+    await repetir(30, async (vez) => {
+      await page.mouse.move(x, origem.y + ((yTopo - origem.y) * (vez + 1)) / 30)
       await page.waitForTimeout(25)
-    }
+    })
     // segura o ponteiro na borda de cima, como uma pessoa esperando a lista rolar
-    for (let t = 0; t < 40; t++) {
-      await page.mouse.move(x, yTopo + (t % 2))
+    await repetir(40, async (vez) => {
+      await page.mouse.move(x, yTopo + (vez % 2))
       await page.waitForTimeout(150)
-    }
+    })
     await page.mouse.up()
     await page.waitForTimeout(1000)
 
@@ -155,7 +156,7 @@ test.describe("LTCAT - Anexos - Ordenação", () => {
       await arrastar(page, a, 0, 3)
       await expect.poll(() => a.descricoes()).toEqual(mover(inicial, 0, 3))
       await c.botaoVoltar.click()
-      await page.getByRole("button", { name: "Sair sem salvar" }).click()
+      await c.botaoConfirmacaoSaida("Sair sem salvar").click()
 
       await page.goto(url)
       await c.abrirAba("Anexos")
