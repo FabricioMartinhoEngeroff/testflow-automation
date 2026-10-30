@@ -3,11 +3,11 @@
 // cria e exclui LTCATs num ano só dele, para não tocar nos demais.
 import type { Browser } from "@playwright/test"
 import { test, expect } from "@support"
-import { sessao, type Usuario } from "@support/usuarios"
+import { credenciais, sessao, temCredencial, type Usuario } from "@support/usuarios"
 import { H1, H2, OUTRA_H1 } from "@support/data/hierarquias"
 import { ltcatValido, type DadosLtcat } from "@support/data/ltcat"
 import { URLS } from "@support/urls"
-import { env, senhaUsuariosQa } from "@shared/env"
+import { env } from "@shared/env"
 import { LtcatPage } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCAT"
 import { LtcatCadastroPage } from "@support/actions/seguranca/programas-e-laudos/ltcat/LTCATCadastro"
 
@@ -112,8 +112,9 @@ test.describe("LTCAT - Permissões (E2E)", () => {
     test("TST002 - acesso pela URL mostra [sem_permissao] e redireciona para o Meu Apollus", async ({ page, toast }) => {
       await page.goto(URLS.ltcat)
       await toast.temTexto(MSG_SEM_PERMISSAO)
-      // o Meu Apollus é a home com o dashboard na query (/apollus/?data={"dashboard":...})
-      await expect(page).toHaveURL(/\/apollus\/\?data=.*dashboard/)
+      // o Meu Apollus é a home: antes vinha com o dashboard na query (/apollus/?data={"dashboard":...}),
+      // em 2026-10-27 já cai em /apollus/ puro
+      await expect(page).toHaveURL(/\/apollus\/(\?data=.*dashboard.*)?$/)
     })
 
     test("TST001 - item LTCAT não aparece no menu lateral", async ({ page, menuLateral }) => {
@@ -152,8 +153,11 @@ test.describe("LTCAT - Permissões (E2E)", () => {
       test("TST011 (pesquisa) - tela carrega sem erro, com filtros e botões, e a pesquisa traz LTCATs", async ({ ltcatPage, page }) => {
         await expect(ltcatPage.titulo).toBeVisible()
         await expect(page.locator("apls-toast")).toHaveCount(0)
+        // a pesquisa recolhe os filtros (fica só o chip da Região)
+        if (await ltcatPage.botaoExpandirFiltros.isVisible()) await ltcatPage.botaoExpandirFiltros.click()
         for (const campo of [ltcatPage.regiao, ltcatPage.unidade, ltcatPage.setor, ltcatPage.ano]) await expect(campo).toBeVisible()
-        await expect(ltcatPage.botaoPesquisar).toBeVisible()
+        // com os filtros expandidos as duas cópias do #btn-search ficam visíveis
+        await expect(ltcatPage.botaoPesquisar.first()).toBeVisible()
         await expect(ltcatPage.botaoRecolherFiltros).toBeVisible()
         expect(await ltcatPage.totalDeRegistros()).toBeGreaterThan(0)
       })
@@ -423,14 +427,14 @@ test.describe("LTCAT - Permissões (E2E)", () => {
 
       test("TST056 (troca de usuário) - o filtro de um usuário não aparece para o próximo", async ({ login, ltcatPage, page }) => {
         const ano = String(new Date().getFullYear())
-        await login.entrar({ usuario: "QAutomatizador_vis_h1", senha: senhaUsuariosQa() })
+        await login.entrar(credenciais("QAutomatizador_vis_h1"))
         await ltcatPage.abrir()
         await ltcatPage.filtrarPorRegiao(H1)
         await ltcatPage.selecionarOpcao(ltcatPage.ano, ano)
         await ltcatPage.pesquisar()
 
         await login.sair()
-        await login.entrar({ usuario: "QAutomatizador_alt_h1", senha: senhaUsuariosQa() })
+        await login.entrar(credenciais("QAutomatizador_alt_h1"))
         await ltcatPage.abrir()
         expect(await ltcatPage.anoSelecionado(), "o Ano escolhido pelo outro usuário").toBe("")
       })
@@ -451,6 +455,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
 
     for (const usuario of H1_INTEIRA) {
       test.describe(usuario, () => {
+        test.skip(!temCredencial(usuario), "usuário ainda não criado no Apollus")
         test.use({ storageState: sessao(usuario) })
 
         test("TST039 - vê LTCATs de Curitiba com e sem unidade", async ({ ltcatPage }) => {
@@ -487,6 +492,7 @@ test.describe("LTCAT - Permissões (E2E)", () => {
 
   test.describe("vários perfis somados (Ex. 6, 7 e 8)", () => {
     test.skip(!OUTRA_H1, "defina OUTRA_H1 em support/data/hierarquias.ts")
+    test.skip(!temCredencial("QAutomatizador_multiperfil"), "usuários multiperfil/H1_H2/multiunidade ainda não criados no Apollus")
 
     test.describe("QAutomatizador_multiperfil (Ex. 6)", () => {
       test.use({ storageState: sessao("QAutomatizador_multiperfil") })

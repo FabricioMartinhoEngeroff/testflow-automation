@@ -26,7 +26,7 @@ Vários usuários fixos `QAutomatizador_*`, já cadastrados no Apollus com perfi
 |---|---|
 | `e2e/specs/auth.setup.ts` | loga cada usuário e salva `.auth/<usuario>.json` |
 | `e2e/support/usuarios.ts` | lista `USUARIOS` e `sessao(usuario)` (caminho do JSON) |
-| `e2e/shared/env.ts` | `senhaUsuariosQa()` (`PGR_SENHA_QA`) |
+| `e2e/shared/env.ts` | `senhaUsuarioQa(login)` (`PGR_SENHA_<login>`) |
 | `e2e/specs/.../ltcat/permissoes-ltcat.spec.ts` | 548 linhas, usa `test.use({ storageState: sessao(...) })` |
 | projetos `auth` e `ltcat-permissoes` (playwright.config) | `ltcat-permissoes` depende de `auth` |
 

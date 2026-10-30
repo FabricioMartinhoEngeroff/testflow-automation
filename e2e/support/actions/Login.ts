@@ -48,6 +48,8 @@ export class LoginPage {
   // o ícone de logout da barra superior não tem nome acessível
   async sair() {
     await this.page.locator("apls-navegador-superior apls-icon[icon='logout']").click()
+    // confirmação "Deseja realmente sair do sistema?" (visto em 2026-10-27)
+    await this.page.getByRole("button", { name: "Sair", exact: true }).click()
     await this.page.waitForURL(/\/login/)
   }
 }

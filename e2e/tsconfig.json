@@ -14,5 +14,5 @@
       "@shared/*": ["./shared/*"]
     }
   },
-  "include": ["specs", "support", "scripts", "shared", "__tests__", "playwright.config.ts", "vitest.config.ts"]
+  "include": ["specs", "support", "scripts", "shared", "__tests__", "playwright.config.ts", "playwright.video.config.ts", "vitest.config.ts"]
 }

@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { URLS } from "../../../../urls"
 import { ltcatValido, type DadosLtcat } from "../../../../data/ltcat"
 import { LtcatConfiguracoesPage, type FatorTroca } from "./LTCATConfiguracoes"
@@ -126,7 +126,10 @@ export class LtcatCadastroPage {
 
   // Cabeçalho + campos com * da aba Referências.
   async preencherObrigatorios(dados: DadosLtcat = ltcatValido) {
-    await this.selecionarOpcao(this.regiao, dados.regiao)
+    // usuário com permissão só em Curitiba: a Região já vem preenchida e o combo não lista a opção;
+    // logo após o Novo a Região da pesquisa ainda está no DOM
+    await expect(this.regiao).toHaveCount(1)
+    if ((await this.regiao.inputValue()) !== dados.regiao) await this.selecionarOpcao(this.regiao, dados.regiao)
     if (dados.unidade) await this.selecionarOpcao(this.unidade, dados.unidade)
     await this.dataBase.fill(dados.dataBase)
     await this.referencias.preencherObrigatorios(dados)

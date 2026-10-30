@@ -1,0 +1,264 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: specs\seguranca\programas-e-laudos\ltcat\referencias-configuracoes-gerais.spec.ts >> LTCAT - Referências - Configurações gerais >> Modelo de documento >> abrangência (modelo QA-AUT-57265) >> TST891 - Argentina com a Unidade 7003 traz o modelo
+- Location: specs\seguranca\programas-e-laudos\ltcat\referencias-configuracoes-gerais.spec.ts:151:7
+
+# Error details
+
+```
+Test timeout of 600000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - progressbar
+    - generic [ref=e5]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - img [ref=e12] [cursor=pointer]
+          - generic [ref=e13]: "|"
+          - heading "Cadastro de LTCAT" [level=3] [ref=e15]
+        - generic [ref=e16]:
+          - generic [ref=e17]: Olá Fabricio, seja bem-vindo!
+          - generic [ref=e21] [cursor=pointer]: 
+          - generic [ref=e23] [cursor=pointer]: 
+          - generic [ref=e25] [cursor=pointer]: 
+          - img [ref=e29] [cursor=pointer]:
+            - text: notifications_none
+            - generic: "0"
+          - img [ref=e31] [cursor=pointer]: pending_actions
+          - generic [ref=e33] [cursor=pointer]: 
+          - img [ref=e35] [cursor=pointer]: logout
+      - complementary [ref=e39]:
+        - generic [ref=e40]:
+          - img [ref=e46] [cursor=pointer]: rocket_launch
+          - img [ref=e52] [cursor=pointer]: engineering
+          - generic [ref=e58] [cursor=pointer]: 
+          - img [ref=e64] [cursor=pointer]:
+            - img [ref=e65]
+          - img [ref=e74] [cursor=pointer]: playlist_add_check
+          - generic [ref=e80] [cursor=pointer]: 
+          - img [ref=e86] [cursor=pointer]: app_registration
+        - generic [ref=e94] [cursor=pointer]: 
+      - generic [ref=e95]:
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - heading "Meu Apollus" [level=4] [ref=e107]
+            - img [ref=e108] [cursor=pointer]: close
+          - generic [ref=e112] [cursor=pointer]:
+            - img [ref=e113]: dashboard
+            - generic [ref=e114]: teste qa
+        - generic [ref=e117]:
+          - generic [ref=e121]: Para incluir um favorito, utilize o campo de pesquisa de atalhos.
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - generic [ref=e130]:
+                  - generic [ref=e135]:
+                    - generic [ref=e136]:
+                      - combobox "*" [ref=e138]
+                      - generic:
+                        - generic:
+                          - generic: "*"
+                    - button [ref=e141] [cursor=pointer]:
+                      - img [ref=e143]: arrow_drop_down
+                  - generic [ref=e149]:
+                    - combobox "undefined" [disabled] [ref=e151]
+                    - generic:
+                      - generic:
+                        - generic: undefined
+                - generic [ref=e153]:
+                  - button "Revisões" [ref=e154] [cursor=pointer]:
+                    - generic [ref=e155]:
+                      - img [ref=e156]: restore
+                      - generic [ref=e157]:
+                        - text: Revisões
+                        - generic: "0"
+                  - button "Notificações" [ref=e158] [cursor=pointer]:
+                    - generic [ref=e159]:
+                      - img [ref=e160]: mail_outline
+                      - text: Notificações
+                - generic [ref=e168]:
+                  - combobox "undefined" [disabled] [ref=e170]
+                  - generic:
+                    - generic:
+                      - generic: undefined
+                - generic [ref=e175]:
+                  - combobox "GHE" [disabled] [ref=e177]
+                  - generic:
+                    - generic:
+                      - generic: GHE
+                - generic [ref=e180]:
+                  - generic [ref=e181]:
+                    - textbox "Data base" [ref=e182]
+                    - generic:
+                      - generic: Data base *
+                  - generic [ref=e183]:
+                    - img [ref=e184]: help_outline
+                    - button "Open calendar" [ref=e186] [cursor=pointer]:
+                      - img [ref=e188]
+              - generic [ref=e191]:
+                - tablist [ref=e194]:
+                  - generic [ref=e195]:
+                    - tab "Referências" [selected] [ref=e196] [cursor=pointer]:
+                      - generic [ref=e197]: Referências
+                    - tab "Configurações" [ref=e198] [cursor=pointer]:
+                      - generic [ref=e199]: Configurações
+                    - tab "Anexos" [ref=e200] [cursor=pointer]:
+                      - generic [ref=e201]: Anexos
+                    - tab "Colaboradores" [ref=e202] [cursor=pointer]:
+                      - generic [ref=e203]: Colaboradores
+                    - tab "Conclusão" [ref=e204] [cursor=pointer]:
+                      - generic [ref=e205]: Conclusão
+                - generic [ref=e207]:
+                  - tabpanel "Referências" [ref=e208]:
+                    - generic [ref=e212]:
+                      - generic [ref=e213]:
+                        - heading "Responsável técnico" [level=4] [ref=e214]
+                        - separator [ref=e215]
+                        - generic [ref=e216]:
+                          - generic [ref=e220]:
+                            - generic [ref=e221]:
+                              - combobox "Responsável técnico *" [ref=e223]
+                              - generic:
+                                - generic:
+                                  - generic: Responsável técnico *
+                            - button [ref=e226] [cursor=pointer]:
+                              - img [ref=e228]: arrow_drop_down
+                          - table [ref=e233]:
+                            - rowgroup [ref=e234]:
+                              - row "Equipe Adicionar" [ref=e235]:
+                                - columnheader "Equipe Adicionar" [ref=e236] [cursor=pointer]:
+                                  - generic [ref=e238]:
+                                    - generic [ref=e239]:
+                                      - generic [ref=e240]: Equipe
+                                      - img [ref=e241]: help_outline
+                                    - button "Adicionar" [ref=e242]:
+                                      - generic [ref=e243]:
+                                        - img [ref=e244]: add_circle_outline
+                                        - text: Adicionar
+                                - columnheader [ref=e245]
+                            - rowgroup [ref=e246]:
+                              - row "Sem registros para listar." [ref=e247]:
+                                - cell "Sem registros para listar." [ref=e248]
+                          - generic [ref=e253]:
+                            - textbox "ART" [ref=e254]
+                            - generic:
+                              - generic: ART
+                          - generic [ref=e258]:
+                            - generic [ref=e259]:
+                              - textbox "Avaliação das condições ambientais de trabalho foi realizada em:" [ref=e260]
+                              - generic:
+                                - generic: "Avaliação das condições ambientais de trabalho foi realizada em: *"
+                            - img [ref=e264]: help_outline
+                          - generic [ref=e269]:
+                            - textbox "Condições operacionais" [ref=e270]
+                            - generic:
+                              - generic: Condições operacionais *
+                      - generic [ref=e271]:
+                        - heading "Configurações Gerais" [level=4] [ref=e272]
+                        - separator [ref=e273]
+                        - generic [ref=e274]:
+                          - generic [ref=e278]:
+                            - generic [ref=e279]:
+                              - combobox "Modelo de documento *" [ref=e281]
+                              - generic:
+                                - generic:
+                                  - generic: Modelo de documento *
+                            - button [ref=e284] [cursor=pointer]:
+                              - img [ref=e286]: arrow_drop_down
+                          - generic [ref=e289]:
+                            - generic [ref=e290]:
+                              - group "Vigência do laudo" [ref=e291]:
+                                - generic [ref=e292]:
+                                  - textbox "Vigência do laudo" [ref=e294]:
+                                    - /placeholder: Início
+                                  - generic [ref=e295]: –
+                                  - textbox "Fim" [ref=e297]
+                              - generic:
+                                - generic: Vigência do laudo *
+                            - button "Open calendar" [ref=e300] [cursor=pointer]:
+                              - img [ref=e302]
+                          - generic [ref=e307]:
+                            - generic [ref=e308]:
+                              - textbox "Expostos - Mulheres" [ref=e309]
+                              - generic:
+                                - generic: Expostos - Mulheres
+                            - img [ref=e313]: help_outline
+                          - generic [ref=e317]:
+                            - generic [ref=e318]:
+                              - textbox "Expostos - Homens" [ref=e319]
+                              - generic:
+                                - generic: Expostos - Homens
+                            - img [ref=e323]: help_outline
+                          - generic [ref=e327]:
+                            - generic [ref=e328]:
+                              - textbox "Expostos - PCDs" [ref=e329]
+                              - generic:
+                                - generic: Expostos - PCDs
+                            - img [ref=e333]: help_outline
+                          - generic [ref=e337]:
+                            - generic [ref=e338]:
+                              - textbox "Total de expostos" [ref=e339]
+                              - generic:
+                                - generic: Total de expostos
+                            - generic [ref=e341]:
+                              - img [ref=e343]: autorenew
+                              - img [ref=e344]: help_outline
+                          - generic [ref=e346] [cursor=pointer]:
+                            - generic [ref=e347]:
+                              - checkbox "Incluir logotipo na capa" [ref=e348]
+                              - generic:
+                                - img
+                            - generic [ref=e349]: Incluir logotipo na capa
+                          - generic [ref=e351] [cursor=pointer]:
+                            - generic [ref=e352]:
+                              - checkbox "Incluir logotipo no cabeçalho de todas as páginas" [ref=e353]
+                              - generic:
+                                - img
+                            - generic [ref=e354]: Incluir logotipo no cabeçalho de todas as páginas
+                          - generic [ref=e356] [cursor=pointer]:
+                            - generic [ref=e357]:
+                              - checkbox "Incluir anexo de Anotação de Responsabilidade Técnica (ART)" [ref=e358]
+                              - generic:
+                                - img
+                            - generic [ref=e359]: Incluir anexo de Anotação de Responsabilidade Técnica (ART)
+                          - generic [ref=e361]:
+                            - generic [ref=e362]:
+                              - checkbox "Incluir histórico de revisões" [disabled] [ref=e363]
+                              - generic:
+                                - img
+                            - generic [ref=e364]:
+                              - generic [ref=e365]: Incluir histórico de revisões
+                              - img [ref=e367]: help_outline
+                          - generic [ref=e369] [cursor=pointer]:
+                            - generic [ref=e370]:
+                              - checkbox "Incluir data de realização na capa do laudo" [ref=e371]
+                              - generic:
+                                - img
+                            - generic [ref=e372]: Incluir data de realização na capa do laudo
+                  - tabpanel "Configurações" [ref=e373]
+                  - tabpanel "Anexos" [ref=e374]
+                  - tabpanel "Colaboradores" [ref=e375]
+                  - tabpanel "Conclusão" [ref=e376]
+            - generic [ref=e377]:
+              - button "Voltar" [ref=e378] [cursor=pointer]: Voltar
+              - button "Salvar" [disabled] [ref=e379]: Salvar
+    - button [ref=e380] [cursor=pointer]:
+      - img [ref=e382]: help_outline
+  - generic:
+    - img
+  - iframe [ref=e386]:
+    - generic [ref=f5e6]:
+      - text: protegido por
+      - strong [ref=f5e7]: reCAPTCHA
+```

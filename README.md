@@ -19,7 +19,7 @@ O repositório tem duas partes independentes:
 ```bash
 cd e2e
 npm install
-cp .env.example .env   # preencha PGR_URL, PGR_USUARIO, PGR_SENHA e PGR_SENHA_QA
+cp .env.example .env   # preencha PGR_URL, PGR_USUARIO, PGR_SENHA e as PGR_SENHA_QAUTO* (uma por usuário de teste)
 ```
 
 O `.env` fica fora do git. Os testes usam o Edge instalado no Windows (`channel: "msedge"`).

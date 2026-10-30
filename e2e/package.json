@@ -23,6 +23,9 @@
     "test:e2e:headed": "playwright test --project=login --project=ltcat --project=pgr --project=profissional --headed",
     "test:e2e:debug": "playwright test --project=login --project=ltcat --project=pgr --project=profissional --debug",
     "test:e2e:ui": "playwright test --project=login --project=ltcat --project=pgr --project=profissional --ui",
+    "test:e2e:video": "playwright test -c playwright.video.config.ts --project=ltcat-permissoes --no-deps --reporter=list",
+    "test:e2e:apresentacao": "playwright test -c playwright.apresentacao.config.ts specs/seguranca/programas-e-laudos/ltcat/anexos",
+    "test:e2e:apresentacao:abrir": "playwright show-report apresentacao/relatorio",
     "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {

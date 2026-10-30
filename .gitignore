@@ -6,6 +6,8 @@ dist/
 # saídas do Playwright
 test-results/
 playwright-report/
+videos-lentos/
+e2e/apresentacao/
 blob-report/
 playwright/.cache/
 .auth/

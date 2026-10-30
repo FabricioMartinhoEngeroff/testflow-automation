@@ -56,8 +56,14 @@ export class LtcatPage {
   // quanto já com a Região preenchida (usuário com permissão numa unidade só)
   async filtrarPorRegiao(regiao: string) {
     if (await this.botaoLimpar.isVisible()) await this.botaoLimpar.click()
-    if ((await this.regiao.inputValue()) !== regiao) await this.selecionarOpcao(this.regiao, regiao)
+    if ((await this.regiao.inputValue()) !== regiao) {
+      await this.selecionarOpcao(this.regiao, regiao)
+      // usuário com permissão só em Curitiba também recebe o multiselect ("Todos 1/1"): falta o ✓
+      if (await this.painelMultiplo.isVisible()) await this.botaoConfirmarSelecao.click()
+    }
     await expect(this.regiao).toHaveValue(regiao)
+    // o app lembra os filtros recolhidos (só a Região à vista): abre para Unidade/Setor/Ano
+    if (await this.botaoExpandirFiltros.isVisible()) await this.botaoExpandirFiltros.click()
   }
 
   // Região/Unidade/Setor viram multiselect quando o usuário tem mais de uma opção: o painel tem
